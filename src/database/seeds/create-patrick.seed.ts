@@ -27,6 +27,8 @@ export class CreatePatrickSeed {
         countryName: 'Uganda',
         countryCode: 'UG',
         address: 'titupati mazima mall',
+        phone: '+2458887365',
+        email: 'test@email.com',
       });
       await manager.save(Branch, branch);
       console.log('Kampala branch created');
