@@ -5,8 +5,6 @@ WORKDIR /app
 
 # Install pnpm
 RUN npm install -g pnpm
-
-# Force pnpm to use a flat node_modules structure (hoisting)
 RUN pnpm config set node-linker hoisted
 
 # Copy metadata first for better caching
@@ -18,6 +16,9 @@ RUN pnpm install --frozen-lockfile
 # Copy source and build
 COPY . .
 RUN pnpm run build
+
+# Compile TypeORM data-source for production use
+RUN npx tsc src/data-source.ts --outDir dist --module commonjs --esModuleInterop
 
 # --- Stage 2: Run ---
 FROM node:20-alpine
@@ -32,11 +33,15 @@ RUN pnpm config set node-linker hoisted
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/pnpm-lock.yaml* ./
 
-# Install PRODUCTION dependencies only
-RUN pnpm install --frozen-lockfile --prod
+# Install ALL dependencies (needed for TypeORM CLI and ts-node)
+RUN pnpm install --frozen-lockfile
 
-# Copy the build output AFTER installing dependencies
+# Copy the build output
 COPY --from=builder /app/dist ./dist
+
+# Copy source files (needed for TypeORM CLI operations)
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
 EXPOSE 3000
 
