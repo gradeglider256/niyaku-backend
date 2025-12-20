@@ -15,6 +15,7 @@ import { ConfigModule } from '@nestjs/config';
 import { RedisDbModule } from './redis_db/redis_db.module';
 import { CommonModule } from './common/common.module';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import { DocumentsModule } from './documents/documents.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
     SysConfigModule,
     PostgreDbModule,
     RedisDbModule,
+    DocumentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

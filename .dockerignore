@@ -1,0 +1,15 @@
+# Dependencies
+node_modules
+npm-debug.log
+
+# Build output
+dist
+artifacts
+
+# Docker files
+Dockerfile
+docker-compose.yaml
+
+# Git
+.git
+.gitignore

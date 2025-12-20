@@ -14,7 +14,7 @@ export class ClientAddress {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'uuid' })
   clientID: string; // Fixed typo from cliendID
 
   @ManyToOne(() => Client, (client) => client.addresses)

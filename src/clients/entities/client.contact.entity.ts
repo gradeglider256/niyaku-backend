@@ -16,7 +16,7 @@ export class ClientContact {
   @PrimaryGeneratedColumn()
   id: number; // Fixed: was string, should be number
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'uuid' })
   clientID: string;
 
   @ManyToOne(() => Client, (client) => client.contacts)

@@ -1,127 +1,134 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class AddressResponseDto {
-    @ApiProperty()
-    id: number;
+  @ApiProperty()
+  id: number;
 
-    @ApiProperty()
-    district: string;
+  @ApiProperty()
+  district: string;
 
-    @ApiProperty()
-    address: string;
+  @ApiProperty()
+  address: string;
 
-    @ApiPropertyOptional()
-    county?: string;
+  @ApiPropertyOptional()
+  county?: string;
 
-    @ApiPropertyOptional()
-    subcounty?: string;
+  @ApiPropertyOptional()
+  subcounty?: string;
 
-    @ApiPropertyOptional()
-    parish?: string;
+  @ApiPropertyOptional()
+  parish?: string;
 
-    @ApiProperty()
-    city: string;
+  @ApiProperty()
+  city: string;
 }
 
 export class ContactResponseDto {
-    @ApiProperty()
-    id: number;
+  @ApiProperty()
+  id: number;
 
-    @ApiProperty({ enum: ['email', 'mobile', 'home', 'work'] })
-    contactType: string;
+  @ApiProperty({ enum: ['email', 'mobile', 'home', 'work'] })
+  contactType: string;
 
-    @ApiProperty()
-    contact: string;
+  @ApiProperty()
+  contact: string;
 }
 
-export class EmploymentResponseDto {
-    @ApiProperty()
-    id: number;
+export class BusinessRepresentativeResponseDto {
+  @ApiProperty()
+  id: string;
 
-    @ApiProperty()
-    employer: string;
+  @ApiProperty()
+  name: string;
 
-    @ApiProperty({ enum: ['current', 'terminated'] })
-    status: string;
+  @ApiProperty()
+  role: string;
 
-    @ApiProperty({ enum: ['self-employed', 'part-time', 'full-time', 'contract'] })
-    type: string;
-
-    @ApiProperty()
-    startedAt: string;
-
-    @ApiPropertyOptional()
-    contractEnd?: string;
-
-    @ApiPropertyOptional()
-    endedAt?: string;
-
-    @ApiProperty()
-    monthlyGeneratedIncome: number;
+  @ApiPropertyOptional()
+  nin?: string;
 }
 
 export class DocumentResponseDto {
-    @ApiProperty()
-    id: number;
+  @ApiProperty()
+  id: number;
 
-    @ApiProperty({ enum: ['national-id', 'pay-slip', 'employment-letter', 'other'] })
-    documentType: string;
+  @ApiProperty({
+    enum: ['national-id', 'pay-slip', 'employment-letter', 'other'],
+  })
+  documentType: string;
 
-    @ApiProperty({ enum: ['pdf', 'docs', 'jpg', 'jpeg', 'png', 'webp'] })
-    fileType: string;
+  @ApiProperty({ enum: ['pdf', 'docs', 'jpg', 'jpeg', 'png', 'webp'] })
+  fileType: string;
 
-    @ApiProperty()
-    uploadedAt: Date;
+  @ApiProperty()
+  uploadedAt: Date;
 }
 
 export class ClientResponseDto {
-    @ApiProperty({ description: 'National ID (NIN)' })
-    id: string;
+  @ApiProperty({ description: 'Client UUID' })
+  id: string;
 
-    @ApiProperty()
-    firstName: string;
+  @ApiProperty({ enum: ['individual', 'business'] })
+  type: string;
 
-    @ApiProperty()
-    lastName: string;
+  // Individual Fields
+  @ApiPropertyOptional()
+  firstName?: string;
 
-    @ApiPropertyOptional()
-    middleName?: string;
+  @ApiPropertyOptional()
+  lastName?: string;
 
-    @ApiProperty()
-    branchID: number;
+  @ApiPropertyOptional()
+  middleName?: string;
 
-    @ApiProperty({ type: [AddressResponseDto] })
-    addresses: AddressResponseDto[];
+  @ApiPropertyOptional({ description: 'NIN (Individual Only)' })
+  nin?: string;
 
-    @ApiProperty({ type: [ContactResponseDto] })
-    contacts: ContactResponseDto[];
+  // Business Fields
+  @ApiPropertyOptional()
+  businessName?: string;
 
-    @ApiProperty({ type: [EmploymentResponseDto] })
-    employments: EmploymentResponseDto[];
+  @ApiPropertyOptional()
+  registrationNumber?: string;
 
-    @ApiProperty({ type: [DocumentResponseDto] })
-    documents: DocumentResponseDto[];
+  @ApiPropertyOptional()
+  businessType?: string;
 
-    @ApiProperty()
-    createdAt: Date;
+  @ApiProperty()
+  branchID: number;
 
-    @ApiProperty()
-    updatedAt: Date;
+  @ApiProperty({ type: [AddressResponseDto] })
+  addresses: AddressResponseDto[];
+
+  @ApiProperty({ type: [ContactResponseDto] })
+  contacts: ContactResponseDto[];
+
+  @ApiPropertyOptional({ type: [BusinessRepresentativeResponseDto] })
+  representatives?: BusinessRepresentativeResponseDto[];
+
+  @ApiProperty({ type: [DocumentResponseDto] })
+  documents: DocumentResponseDto[];
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
 }
 
 export class PaginatedClientsResponseDto {
-    @ApiProperty({ type: [ClientResponseDto] })
-    data: ClientResponseDto[];
+  @ApiProperty({ type: [ClientResponseDto] })
+  data: ClientResponseDto[];
 
-    @ApiProperty()
-    total: number;
+  @ApiProperty()
+  total: number;
 
-    @ApiProperty()
-    page: number;
+  @ApiProperty()
+  page: number;
 
-    @ApiProperty()
-    pageSize: number;
+  @ApiProperty()
+  pageSize: number;
 
-    @ApiProperty()
-    totalPages: number;
+  @ApiProperty()
+  totalPages: number;
 }

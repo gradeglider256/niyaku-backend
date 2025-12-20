@@ -14,7 +14,7 @@ export class ClientFinancial {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'uuid' })
   clientID: string;
 
   @ManyToOne(() => Client, (client) => client.financials)

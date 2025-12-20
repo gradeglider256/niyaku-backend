@@ -37,7 +37,7 @@ import { NotificationModule } from '../notification/notification.module';
   ],
   controllers: [UserController],
   providers: [UserService],
-  exports: [UserService],
+  exports: [UserService, JwtModule],
 })
 export class UserModule {
   configure(consumer: MiddlewareConsumer) {

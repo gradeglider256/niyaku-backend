@@ -1,8 +1,3 @@
-// import { Module } from '@nestjs/common';
-
-// @Module({})
-// export class PostgreDbModule {}
-// src/database/database.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -35,4 +30,4 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     }),
   ],
 })
-export class PostgreDbModule { }
+export class PostgreDbModule {}

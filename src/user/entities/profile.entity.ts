@@ -1,5 +1,6 @@
-import { Entity, Column, PrimaryColumn, JoinColumn, OneToOne } from 'typeorm';
+import { Entity, Column, PrimaryColumn, JoinColumn, OneToOne, ManyToOne } from 'typeorm';
 import { Auth } from './auth.entity';
+import { Branch } from './branch.entity';
 
 @Entity()
 export class Profile {
@@ -29,6 +30,10 @@ export class Profile {
 
   @Column({ type: 'bigint' })
   branchID: number;
+
+  @ManyToOne(() => Branch, (branch) => branch.profiles)
+  @JoinColumn({ name: 'branchID' })
+  branch: Branch;
 
   @Column('date')
   dateHired: string;

@@ -8,10 +8,16 @@ import {
     IsOptional,
     IsEnum,
     IsNumber,
-    Min,
+    ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { DocumentUploadDto } from './document-upload.dto';
+
+export enum ClientType {
+    INDIVIDUAL = 'individual',
+    BUSINESS = 'business',
+}
 
 class AddressDto {
     @ApiProperty()
@@ -56,61 +62,79 @@ class ContactDto {
     contact: string;
 }
 
-class EmploymentDto {
+export class BusinessRepresentativeDto {
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
-    employer: string;
-
-    @ApiProperty({ enum: ['current', 'terminated'] })
-    @IsEnum(['current', 'terminated'])
-    status: 'current' | 'terminated';
-
-    @ApiProperty({ enum: ['self-employed', 'part-time', 'full-time', 'contract'] })
-    @IsEnum(['self-employed', 'part-time', 'full-time', 'contract'])
-    type: 'self-employed' | 'part-time' | 'full-time' | 'contract';
+    name: string;
 
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
-    startedAt: string;
+    role: string;
 
     @ApiPropertyOptional()
     @IsString()
     @IsOptional()
-    contractEnd?: string;
-
-    @ApiPropertyOptional()
-    @IsString()
-    @IsOptional()
-    endedAt?: string;
-
-    @ApiProperty()
-    @IsNumber()
-    monthlyGeneratedIncome: number;
+    nin?: string;
 }
 
 export class CreateClientDto {
-    @ApiProperty({ example: '1234567890123456789012', description: 'National ID (NIN)' })
+    @ApiProperty({ enum: ClientType })
+    @IsEnum(ClientType)
+    type: ClientType;
+
+    // Individual Client Fields
+    @ApiPropertyOptional({ description: 'Required for Individual clients' })
+    @ValidateIf((o) => o.type === ClientType.INDIVIDUAL)
     @IsString()
     @IsNotEmpty()
     @Length(1, 50)
-    id: string; // NIN
+    nin?: string;
 
-    @ApiProperty()
+    @ApiPropertyOptional({ description: 'Required for Individual clients' })
+    @ValidateIf((o) => o.type === ClientType.INDIVIDUAL)
     @IsString()
     @IsNotEmpty()
-    firstName: string;
+    firstName?: string;
 
-    @ApiProperty()
+    @ApiPropertyOptional({ description: 'Required for Individual clients' })
+    @ValidateIf((o) => o.type === ClientType.INDIVIDUAL)
     @IsString()
     @IsNotEmpty()
-    lastName: string;
+    lastName?: string;
 
     @ApiPropertyOptional()
     @IsString()
     @IsOptional()
     middleName?: string;
+
+    // Business Client Fields
+    @ApiPropertyOptional({ description: 'Required for Business clients' })
+    @ValidateIf((o) => o.type === ClientType.BUSINESS)
+    @IsString()
+    @IsNotEmpty()
+    businessName?: string;
+
+    @ApiPropertyOptional({ description: 'Required for Business clients' })
+    @ValidateIf((o) => o.type === ClientType.BUSINESS)
+    @IsString()
+    @IsNotEmpty()
+    registrationNumber?: string;
+
+    @ApiPropertyOptional()
+    @ValidateIf((o) => o.type === ClientType.BUSINESS)
+    @IsString()
+    @IsOptional()
+    businessType?: string;
+
+    @ApiPropertyOptional({ type: [BusinessRepresentativeDto], description: 'Required for Business clients' })
+    @ValidateIf((o) => o.type === ClientType.BUSINESS)
+    @IsArray()
+    @ArrayMinSize(1)
+    @ValidateNested({ each: true })
+    @Type(() => BusinessRepresentativeDto)
+    representatives?: BusinessRepresentativeDto[];
 
     @ApiPropertyOptional({ description: 'Branch ID - requires branch management permissions if specified' })
     @IsNumber()
@@ -124,15 +148,17 @@ export class CreateClientDto {
     @Type(() => AddressDto)
     addresses: AddressDto[];
 
-    @ApiProperty({ type: [ContactDto], description: 'At least 1 mobile contact required', })
+    @ApiProperty({ type: [ContactDto], description: 'At least 1 mobile contact required' })
     @IsArray()
     @ArrayMinSize(1)
     @ValidateNested({ each: true })
     @Type(() => ContactDto)
     contacts: ContactDto[];
 
-    @ApiProperty({ type: EmploymentDto })
-    @ValidateNested()
-    @Type(() => EmploymentDto)
-    employment: EmploymentDto;
+    @ApiPropertyOptional({ type: [DocumentUploadDto], description: 'Optional documents to upload with client creation' })
+    @IsArray()
+    @IsOptional()
+    @ValidateNested({ each: true })
+    @Type(() => DocumentUploadDto)
+    documents?: DocumentUploadDto[];
 }

@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   Body,
   Controller,
@@ -8,6 +11,7 @@ import {
   Put,
   Query,
   Req,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
@@ -21,7 +25,18 @@ import { AddEmployeeDTO } from './dto/add.employee.dto';
 import { ResponseUtil } from '../common/utils/response.utils';
 import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
-import { ApiResponse, ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiResponse,
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+} from '@nestjs/swagger';
+import {
+  BasePaginationDto,
+  PaginationQueryWithBranchDto,
+} from '../common/dtos/pagination.dtos';
+import { Pagination } from '../common/decorators/pagination.decorator';
+import { Profile } from './entities/profile.entity';
 
 @Controller()
 @ApiTags('Users')
@@ -30,7 +45,7 @@ export class UserController {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   @Post('auth/signin')
   @ApiResponse({ status: 200, description: 'Signin successful' })
@@ -50,7 +65,10 @@ export class UserController {
   }
 
   @Get('auth/verify-email')
-  @ApiResponse({ status: 200, description: 'Email verification not implemented yet' })
+  @ApiResponse({
+    status: 200,
+    description: 'Email verification not implemented yet',
+  })
   verifyEmail() {
     return ResponseUtil.success('Email verification not implemented yet');
   }
@@ -60,7 +78,6 @@ export class UserController {
   @ApiResponse({ status: 401, description: 'User not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async getProfile(@Req() req: Request) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const user = req['user'] as any;
     const profile = await this.userService.getProfile(user.id);
     return ResponseUtil.success('Profile retrieved', profile);
@@ -96,11 +113,21 @@ export class UserController {
   }
 
   @Post('auth/roles')
-  @ApiResponse({ status: 200, description: 'Role created' })
+  @ApiResponse({ status: 201, description: 'Role created' })
   @ApiResponse({ status: 401, description: 'User not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async createNewRole(@Body() dto: CreateRoleDto) {
     const role = await this.userService.createRole(dto);
+    return ResponseUtil.success('Role created', role);
+  }
+
+  @Get('auth/roles')
+  @ApiResponse({ status: 200, description: 'Role created' })
+  @ApiResponse({ status: 401, description: 'User not found' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async getRoles(@Query() dto: BasePaginationDto) {
+    const { page, pageSize } = dto;
+    const role = await this.userService.getRoles(page, pageSize);
     return ResponseUtil.success('Role created', role);
   }
 
@@ -120,27 +147,44 @@ export class UserController {
 
   @Post('employees')
   @UseGuards(PermissionsGuard)
-  @Permissions('employee.add-employee', 'employee.manage-employee')
+  @Permissions('employee.add', 'employee.manage')
   @ApiOperation({ summary: 'Create a new employee' })
   @ApiResponse({ status: 201, description: 'Employee created successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  async addEmployee(@Body() dto: AddEmployeeDTO) {
+  async addEmployee(@Body() dto: AddEmployeeDTO, @Req() req: any) {
+    const user: Profile = req.user;
+
+    const userPermissions = user.auth.roles
+      .flatMap((userRole) => userRole.role.permissions)
+      .map((rolePerm) => rolePerm.permission.name);
+
+    const hasPermission = userPermissions.includes('branch.view');
+
+    if (dto.branchID && !hasPermission) {
+      throw new UnauthorizedException(
+        'you need read branch permission to add a user with a branch',
+      );
+    } else if (!dto.branchID) {
+      dto.branchID = user.branchID;
+    }
+
     const result = await this.userService.addEmployee(dto);
     return ResponseUtil.success('Employee added', result);
   }
 
   @Get('employees')
-  @Permissions('employee.view-employee')
+  @Permissions('employee.view')
   @ApiOperation({ summary: 'Get employees' })
   @ApiResponse({ status: 200, description: 'Employees retrieved' })
   @ApiResponse({ status: 401, description: 'User not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getEmployees(
-    @Query('page') page: number = 1,
-    @Query('pageSize') pageSize: number = 25,
-    @Query('branch_id') branchId?: number,
-  ) {
-    const result = await this.userService.getEmployees(page, pageSize, branchId);
+  async getEmployees(@Query() pwbdto: PaginationQueryWithBranchDto) {
+    const { page, pageSize, branchId } = pwbdto;
+    const result = await this.userService.getEmployees(
+      page,
+      pageSize,
+      branchId,
+    );
     return ResponseUtil.success('Employees retrieved', result);
   }
 
@@ -156,7 +200,7 @@ export class UserController {
   }
 
   @Post('branch')
-  @Permissions('branch.add-branch', 'branch.manage-branch')
+  @Permissions('branch.add', 'branch.manage')
   @ApiOperation({ summary: 'Create a new branch' })
   @ApiResponse({ status: 201, description: 'Branch created successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -167,15 +211,14 @@ export class UserController {
   }
 
   @Get('branch')
-  @Permissions('branch.view-branch', 'branch.manage-branch')
+  @Permissions('branch.view', 'branch.manage')
   @ApiOperation({ summary: 'Get branches' })
   @ApiResponse({ status: 200, description: 'Branches retrieved' })
   @ApiResponse({ status: 401, description: 'User not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getBranches(
-    @Query('page') page: number = 1,
-    @Query('pageSize') pageSize: number = 25,
-  ) {
+  @Pagination()
+  async getBranches(@Query() pdto: BasePaginationDto) {
+    const { page, pageSize } = pdto;
     const result = await this.userService.getBranches(page, pageSize);
     return ResponseUtil.success('Branches retrieved', result);
   }

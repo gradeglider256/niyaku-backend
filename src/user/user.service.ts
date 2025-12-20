@@ -27,12 +27,10 @@ export class UserService {
   constructor(
     private readonly entityManager: EntityManager,
     private readonly notificationService: NotificationService,
-  ) { }
+  ) {}
 
   @TrackDbCall('UserModule')
   async signin(dto: SignInDto) {
-    console.log(dto);
-
     // Find profile with all relations
     const profile = await this.entityManager.findOne(Profile, {
       where: { email: dto.email },
@@ -45,12 +43,9 @@ export class UserService {
       ],
     });
 
-    console.log(profile);
     if (!profile || !profile.auth) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
-
 
     // Fetch the password separately since it has select: false
     const authWithPassword = await this.entityManager
@@ -59,12 +54,14 @@ export class UserService {
       .addSelect('auth.password')
       .addSelect('auth.salt')
       .getOne();
-    console.log(authWithPassword);
     if (!authWithPassword || !authWithPassword.password) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isMatch = await bcrypt.compare(dto.password, authWithPassword.password);
+    const isMatch = await bcrypt.compare(
+      dto.password,
+      authWithPassword.password,
+    );
     if (!isMatch) {
       throw new UnauthorizedException('Incorrect password');
     }
@@ -120,7 +117,9 @@ export class UserService {
       if (!user) throw new NotFoundException('User not found');
 
       for (const roleId of dto.roleIDs) {
-        const role = await manager.findOne(Role, { where: { id: String(roleId) } });
+        const role = await manager.findOne(Role, {
+          where: { id: String(roleId) },
+        });
         if (!role) throw new NotFoundException(`Role ${roleId} not found`);
 
         const existing = await manager.findOne(UserRole, {
@@ -147,11 +146,30 @@ export class UserService {
       if (!user) throw new NotFoundException('User not found');
 
       for (const roleId of dto.roleIDs) {
-        await manager.delete(UserRole, { userID: dto.userID, roleID: String(roleId) });
+        await manager.delete(UserRole, {
+          userID: dto.userID,
+          roleID: String(roleId),
+        });
       }
 
       return await this.getProfile(dto.userID);
     });
+  }
+
+  @TrackDbCall('UserModule')
+  async getRoles(page: number = 1, pageSize: number = 25) {
+    const skip = (page - 1) * pageSize;
+
+    const query = this.entityManager
+      .createQueryBuilder(Role, 'role')
+      .leftJoinAndSelect('role.permissions', 'rolePermissions')
+      .leftJoinAndSelect('rolePermissions.permission', 'permission')
+      .skip(skip)
+      .take(pageSize);
+
+    const [data, count] = await query.getManyAndCount();
+
+    return { data, count, page, pageSize };
   }
 
   @TrackDbCall('UserModule')
@@ -163,8 +181,11 @@ export class UserService {
       const savedRole = await manager.save(Role, role);
 
       for (const permId of dto.permissionIDs) {
-        const perm = await manager.findOne(Permission, { where: { id: permId } });
-        if (!perm) throw new BadRequestException(`Permission ${permId} not found`);
+        const perm = await manager.findOne(Permission, {
+          where: { id: permId },
+        });
+        if (!perm)
+          throw new BadRequestException(`Permission ${permId} not found`);
 
         const rolePerm = manager.create(RolePermissions, {
           roleID: savedRole.id,
@@ -193,12 +214,16 @@ export class UserService {
 
     return await this.entityManager.transaction(async (manager) => {
       // Check if user already exists
-      const existingProfile = await manager.findOne(Profile, { where: { id: dto.id } });
+      const existingProfile = await manager.findOne(Profile, {
+        where: { id: dto.id },
+      });
       if (existingProfile) {
         throw new BadRequestException('User with this ID already exists');
       }
 
-      const existingEmail = await manager.findOne(Profile, { where: { email: dto.email } });
+      const existingEmail = await manager.findOne(Profile, {
+        where: { email: dto.email },
+      });
       if (existingEmail) {
         throw new BadRequestException('User with this email already exists');
       }
@@ -266,10 +291,14 @@ export class UserService {
   }
 
   @TrackDbCall('UserModule')
-  async getEmployees(page: number = 1, pageSize: number = 25, branchId?: number) {
+  async getEmployees(
+    page: number = 1,
+    pageSize: number = 25,
+    branchId?: number,
+  ) {
     const skip = (page - 1) * pageSize;
-    const query = this.entityManager.createQueryBuilder(Profile, 'profile')
-      .leftJoinAndSelect('profile.auth', 'auth')
+    const query = this.entityManager
+      .createQueryBuilder(Profile, 'profile')
       .skip(skip)
       .take(pageSize);
 

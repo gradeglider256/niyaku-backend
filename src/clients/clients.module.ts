@@ -4,23 +4,26 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsController } from './clients.controller';
 import { ClientsService } from './clients.service';
-import { Client } from './entities/client.entity';
+import { Client, IndividualClient, BusinessClient } from './entities/client.entity';
 import { ClientAddress } from './entities/client.address.entity';
 import { ClientContact } from './entities/client.contact.entity';
-import { ClientEmployment } from './entities/client.employment.entity';
 import { ClientDocument } from './entities/client.documents.entity';
+import { BusinessRepresentative } from './entities/business-representative.entity';
 import { Branch } from '../user/entities/branch.entity';
 import { AuthMiddleware } from '../user/auth.middleware';
 import { UserModule } from '../user/user.module';
+import { DocumentsModule } from '../documents/documents.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       Client,
+      IndividualClient,
+      BusinessClient,
       ClientAddress,
       ClientContact,
-      ClientEmployment,
       ClientDocument,
+      BusinessRepresentative,
       Branch,
     ]),
     JwtModule.registerAsync({
@@ -32,6 +35,7 @@ import { UserModule } from '../user/user.module';
       inject: [ConfigService],
     }),
     UserModule,
+    DocumentsModule,
   ],
   controllers: [ClientsController],
   providers: [ClientsService],

@@ -1,4 +1,20 @@
 services:
+  niyaku-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: niyaku-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      niyaku-db:
+        condition: service_healthy
+      niyaku-redis:
+        condition: service_started
+
   niyaku-db:
     image: postgres:15
     container_name: niyaku-db
@@ -9,9 +25,13 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-      HOST: ${DB_HOST}
     ports:
       - "${DB_PORT}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
       - niyaku_postgres_data:/var/lib/postgresql/data
 

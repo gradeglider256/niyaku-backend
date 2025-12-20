@@ -8,13 +8,14 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Client } from './client.entity';
+import { Document } from '../../documents/entities/document.entity';
 
 @Entity()
 export class ClientDocument {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'uuid', })
   clientID: string;
 
   @ManyToOne(() => Client, (client) => client.documents)
@@ -27,11 +28,12 @@ export class ClientDocument {
   })
   documentType: 'national-id' | 'pay-slip' | 'employment-letter' | 'other';
 
-  @Column({ type: 'text' })
-  documentLocation: string;
+  @Column({ type: 'uuid' })
+  documentId: string;
 
-  @Column({ type: 'enum', enum: ['pdf', 'docs', 'jpg', 'jpeg', 'png', 'webp'] })
-  fileType: 'pdf' | 'docs' | 'jpg' | 'jpeg' | 'png' | 'webp';
+  @ManyToOne(() => Document)
+  @JoinColumn({ name: 'documentId' })
+  document: Document;
 
   @Column({ type: 'varchar', length: 14, nullable: true })
   uploadedBy: string; // User ID who uploaded

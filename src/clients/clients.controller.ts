@@ -10,6 +10,7 @@ import {
   Req,
   UseGuards,
   ForbiddenException,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -24,7 +25,6 @@ import { UpdateClientDto } from './dto/update-client.dto';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { CreateDocumentDto } from './dto/create-document.dto';
-import { PaginationQueryDto } from './dto/pagination-query.dto';
 import {
   ClientResponseDto,
   PaginatedClientsResponseDto,
@@ -34,6 +34,10 @@ import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Profile } from '../user/entities/profile.entity';
 import type { Request } from 'express';
+import { BodyLimit } from '../common/decorators/body-limit.decorator';
+import { BodyLimitInterceptor } from '../common/interceptors/body-limit.interceptor';
+import { PaginationQueryWithBranchDto } from '../common/dtos/pagination.dtos';
+import { Pagination } from '../common/decorators/pagination.decorator';
 
 @Controller('clients')
 @ApiTags('Clients')
@@ -42,8 +46,11 @@ import type { Request } from 'express';
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) { }
 
+
   @Post()
-  @Permissions('clients.create')
+  @Permissions('clients.add')
+  @BodyLimit('20mb')
+  @UseInterceptors(BodyLimitInterceptor)
   @ApiOperation({ summary: 'Create a new client' })
   @ApiResponse({
     status: 201,
@@ -53,8 +60,15 @@ export class ClientsController {
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 409, description: 'Client already exists' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Insufficient permissions for cross-branch operations' })
-  async createClient(@Body() createClientDto: CreateClientDto, @Req() req: Request) {
+  @ApiResponse({
+    status: 403,
+    description: 'Insufficient permissions for cross-branch operations',
+  })
+  @ApiResponse({ status: 413, description: 'Payload too large (exceeds 5MB)' })
+  async createClient(
+    @Body() createClientDto: CreateClientDto,
+    @Req() req: Request,
+  ) {
     const user = req['user'] as Profile;
 
     // Determine which branchID to use
@@ -66,13 +80,14 @@ export class ClientsController {
         .flatMap((userRole) => userRole.role.permissions)
         .map((rolePerm) => rolePerm.permission.name);
 
-      const hasBranchPermissions = userPermissions.some((perm) =>
-        perm === 'branch.view-branch' || perm === 'branch.manage-branch'
+      const hasBranchPermissions = userPermissions.some(
+        (perm) =>
+          perm === 'branch.view-branch' || perm === 'branch.manage-branch',
       );
 
       if (!hasBranchPermissions) {
         throw new ForbiddenException(
-          'Insufficient permissions to create clients in other branches'
+          'Insufficient permissions to create clients in other branches',
         );
       }
 
@@ -98,23 +113,34 @@ export class ClientsController {
     type: PaginatedClientsResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Insufficient permissions for cross-branch operations' })
-  async getAllClients(@Query() paginationQuery: PaginationQueryDto, @Req() req: Request) {
+  @ApiResponse({
+    status: 403,
+    description: 'Insufficient permissions for cross-branch operations',
+  })
+  @Pagination()
+  async getAllClients(
+    @Query() paginationQuery: PaginationQueryWithBranchDto,
+    @Req() req: Request,
+  ) {
     const user = req['user'] as Profile;
 
     // If branchId is specified in query, check permissions
-    if (paginationQuery.branchId !== undefined && paginationQuery.branchId !== user.branchID) {
+    if (
+      paginationQuery.branchId !== undefined &&
+      paginationQuery.branchId !== user.branchID
+    ) {
       const userPermissions = user.auth.roles
         .flatMap((userRole) => userRole.role.permissions)
         .map((rolePerm) => rolePerm.permission.name);
 
-      const hasBranchPermissions = userPermissions.some((perm) =>
-        perm === 'branch.view-branch' || perm === 'branch.manage-branch'
+      const hasBranchPermissions = userPermissions.some(
+        (perm) =>
+          perm === 'branch.view-branch' || perm === 'branch.manage-branch',
       );
 
       if (!hasBranchPermissions) {
         throw new ForbiddenException(
-          'Insufficient permissions to view clients from other branches'
+          'Insufficient permissions to view clients from other branches',
         );
       }
     } else if (paginationQuery.branchId === undefined) {
@@ -175,7 +201,7 @@ export class ClientsController {
   }
 
   @Post(':id/documents')
-  @Permissions('clients.documents.create')
+  @Permissions('clients.documents.add')
   @ApiOperation({ summary: 'Add document to client' })
   @ApiParam({ name: 'id', description: 'Client National ID (NIN)' })
   @ApiResponse({ status: 201, description: 'Document added successfully' })
@@ -185,12 +211,15 @@ export class ClientsController {
     @Param('id') id: string,
     @Body() createDocumentDto: CreateDocumentDto,
   ) {
-    const document = await this.clientsService.addDocument(id, createDocumentDto);
+    const document = await this.clientsService.addDocument(
+      id,
+      createDocumentDto,
+    );
     return ResponseUtil.success('Document added successfully', document);
   }
 
   @Post(':id/addresses')
-  @Permissions('clients.addresses.create')
+  @Permissions('clients.addresses.add')
   @ApiOperation({ summary: 'Add address to client' })
   @ApiParam({ name: 'id', description: 'Client National ID (NIN)' })
   @ApiResponse({ status: 201, description: 'Address added successfully' })

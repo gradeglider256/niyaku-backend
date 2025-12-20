@@ -2,34 +2,34 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
-  PrimaryColumn,
+  PrimaryGeneratedColumn,
+  TableInheritance,
+  ChildEntity,
   UpdateDateColumn,
 } from 'typeorm';
 import { ClientAddress } from './client.address.entity';
 import { ClientContact } from './client.contact.entity';
 import { ClientDocument } from './client.documents.entity';
-import { ClientEmployment } from './client.employment.entity';
 import { ClientFinancial } from './client.financial.entity';
 import { Branch } from '../../user/entities/branch.entity';
+import { BusinessRepresentative } from './business-representative.entity';
+
+export enum ClientType {
+  INDIVIDUAL = 'individual',
+  BUSINESS = 'business',
+}
 
 @Entity()
-@Index(['id'], { unique: true })
-export class Client {
-  @PrimaryColumn({ type: 'varchar', length: 50 })
-  id: string; // NIN to prevent duplication
+@TableInheritance({ column: { type: 'varchar', name: 'type' } })
+export abstract class Client {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  @Column({ type: 'varchar', length: 100 })
-  firstName: string;
-
-  @Column({ type: 'varchar', length: 100 })
-  lastName: string;
-
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  middleName: string;
+  @Column({ type: 'enum', enum: ClientType })
+  type: ClientType;
 
   @Column({ type: 'int' })
   branchID: number;
@@ -47,9 +47,6 @@ export class Client {
   @OneToMany(() => ClientDocument, (document) => document.client)
   documents: ClientDocument[];
 
-  @OneToMany(() => ClientEmployment, (employment) => employment.client)
-  employments: ClientEmployment[];
-
   @OneToMany(() => ClientFinancial, (financial) => financial.client)
   financials: ClientFinancial[];
 
@@ -58,4 +55,36 @@ export class Client {
 
   @UpdateDateColumn()
   updatedAt: Date;
+}
+
+@ChildEntity(ClientType.INDIVIDUAL)
+export class IndividualClient extends Client {
+  @Column({ type: 'varchar', length: 100 })
+  firstName: string;
+
+  @Column({ type: 'varchar', length: 100 })
+  lastName: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  middleName: string;
+
+  @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
+  nin: string;
+}
+
+@ChildEntity(ClientType.BUSINESS)
+export class BusinessClient extends Client {
+  @Column({ type: 'varchar', length: 200 })
+  businessName: string;
+
+  @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
+  registrationNumber: string;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  businessType: string;
+
+  @OneToMany(() => BusinessRepresentative, (rep) => rep.client, {
+    cascade: true,
+  })
+  representatives: BusinessRepresentative[];
 }
