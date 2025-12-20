@@ -6,7 +6,7 @@ services:
     container_name: niyaku-api
     restart: unless-stopped
     ports:
-      - "${PORT}:3000"
+      - "3003:3000"
     env_file:
       - .env
     depends_on:
