@@ -26,6 +26,7 @@ export class CreatePatrickSeed {
         isHeadOffice: 'true',
         countryName: 'Uganda',
         countryCode: 'UG',
+        address: 'titupati mazima mall',
       });
       await manager.save(Branch, branch);
       console.log('Kampala branch created');
