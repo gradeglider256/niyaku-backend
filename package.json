@@ -5,7 +5,7 @@
   "author": "",
   "private": true,
   "license": "MIT",
-  "scripts": {
+  "scripts":{
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -33,7 +33,7 @@
     "db:drop:prod": "pnpm run typeorm:prod schema:drop -d dist/data-source.js",
     "db:sync": "pnpm run typeorm schema:sync -d src/data-source.ts && pnpm run db:seed",
     "db:sync:prod": "pnpm run typeorm:prod schema:sync -d dist/data-source.js",
-    "db:seed": "ts-node src/database/seeds/run-seed.ts",
+    "db:seed": "ts-node -r tsconfig-paths/register src/database/seeds/run-seed.ts",
     "db:reset": "pnpm run db:drop && pnpm run db:sync",
     "db:reset:prod": "pnpm run db:drop:prod && pnpm run db:sync:prod"
   },
