@@ -1,6 +1,6 @@
-import { Client } from 'src/clients/entities/client.entity';
-import { Loan } from 'src/disbursement/entities/loan.entity';
-import { Branch } from 'src/user/entities/branch.entity';
+import { Client } from '../../clients/entities/client.entity';
+import { Loan } from '../../disbursement/entities/loan.entity';
+import { Branch } from '../../user/entities/branch.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
