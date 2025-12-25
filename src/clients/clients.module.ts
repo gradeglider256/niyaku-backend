@@ -4,7 +4,11 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsController } from './clients.controller';
 import { ClientsService } from './clients.service';
-import { Client, IndividualClient, BusinessClient } from './entities/client.entity';
+import {
+  Client,
+  IndividualClient,
+  BusinessClient,
+} from './entities/client.entity';
 import { ClientAddress } from './entities/client.address.entity';
 import { ClientContact } from './entities/client.contact.entity';
 import { ClientDocument } from './entities/client.documents.entity';
@@ -43,8 +47,6 @@ import { DocumentsModule } from '../documents/documents.module';
 })
 export class ClientsModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AuthMiddleware)
-      .forRoutes(ClientsController);
+    consumer.apply(AuthMiddleware).forRoutes(ClientsController);
   }
 }

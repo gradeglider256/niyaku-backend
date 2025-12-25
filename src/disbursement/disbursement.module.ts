@@ -14,6 +14,9 @@ import { Client } from '../clients/entities/client.entity';
 import { AuthMiddleware } from '../user/auth.middleware';
 import { UserModule } from '../user/user.module';
 
+import { Repayment } from '../repayment/entity/repayment.entity';
+import { DocumentsModule } from '../documents/documents.module';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -24,8 +27,10 @@ import { UserModule } from '../user/user.module';
       PersonDisbursement,
       Branch,
       Client,
+      Repayment,
     ]),
     UserModule,
+    DocumentsModule,
   ],
   controllers: [DisbursementController],
   providers: [DisbursementService],

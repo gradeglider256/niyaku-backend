@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CreditAssessmentController } from './credit_assessment.controller';
 import { CreditAssessmentService } from './credit_assessment.service';
@@ -11,6 +11,8 @@ import { Branch } from '../user/entities/branch.entity';
 import { Profile } from '../user/entities/profile.entity';
 import { Repayment } from '../repayment/entity/repayment.entity';
 import { DocumentsModule } from '../documents/documents.module';
+import { AuthMiddleware } from '../user/auth.middleware';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
@@ -24,10 +26,16 @@ import { DocumentsModule } from '../documents/documents.module';
       Profile,
       Repayment,
     ]),
+    UserModule,
     DocumentsModule,
   ],
+
   controllers: [CreditAssessmentController],
   providers: [CreditAssessmentService],
   exports: [CreditAssessmentService],
 })
-export class CreditAssessmentModule { }
+export class CreditAssessmentModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(AuthMiddleware).forRoutes(CreditAssessmentController);
+  }
+}

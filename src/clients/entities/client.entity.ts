@@ -16,6 +16,9 @@ import { ClientDocument } from './client.documents.entity';
 import { ClientFinancial } from './client.financial.entity';
 import { Branch } from '../../user/entities/branch.entity';
 import { BusinessRepresentative } from './business-representative.entity';
+import { EmploymentHistory } from '../../credit_assessment/entities/employment.entity';
+import { CompanyEarnings } from '../../credit_assessment/entities/company-earnings.entity';
+import { AssessmentReport } from '../../credit_assessment/entities/assessment-report.entity';
 
 export enum ClientType {
   INDIVIDUAL = 'individual',
@@ -49,6 +52,15 @@ export abstract class Client {
 
   @OneToMany(() => ClientFinancial, (financial) => financial.client)
   financials: ClientFinancial[];
+
+  @OneToMany(() => EmploymentHistory, (employment) => employment.client)
+  employmentHistory: EmploymentHistory[];
+
+  @OneToMany(() => CompanyEarnings, (earning) => earning.client)
+  companyEarnings: CompanyEarnings[];
+
+  @OneToMany(() => AssessmentReport, (assessment) => assessment.client)
+  assessmentReports: AssessmentReport[];
 
   @CreateDateColumn()
   createdAt: Date;

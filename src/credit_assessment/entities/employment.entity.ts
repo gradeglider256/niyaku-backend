@@ -4,11 +4,13 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Client } from '../../clients/entities/client.entity';
 import { Branch } from '../../user/entities/branch.entity';
+import { SalaryHistory } from './salary.entity';
 
 @Entity()
 export class EmploymentHistory {
@@ -32,10 +34,10 @@ export class EmploymentHistory {
   @Column({ type: 'varchar', length: 255 })
   employerName: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100 })
   industry: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100 })
   position: string;
 
   @Column({
@@ -63,6 +65,9 @@ export class EmploymentHistory {
 
   @Column({ type: 'boolean', default: false })
   isVerified: boolean;
+
+  @OneToMany(() => SalaryHistory, (salary) => salary.employment)
+  salaryHistory: SalaryHistory[];
 
   @CreateDateColumn()
   createdAt: Date;

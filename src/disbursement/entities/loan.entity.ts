@@ -37,8 +37,8 @@ export class Loan {
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   amount: number;
 
-  @Column({ type: 'varchar', length: 50 })
-  tenure: string;
+  @Column({ type: 'int' })
+  tenure: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 2 })
   interestRate: number;
@@ -58,6 +58,15 @@ export class Loan {
 
   @OneToMany(() => Disbursement, (disbursement) => disbursement.loan)
   disbursements: Disbursement[];
+
+  @Column({ type: 'int', default: 0 })
+  overdueIncidents: number;
+
+  @Column({ type: 'decimal', precision: 15, scale: 2 })
+  balance: number;
+
+  @Column({ type: 'varchar', length: 12, default: '1M', nullable: true })
+  timeToFirstPayment?: string;
 
   @CreateDateColumn()
   createdAt: Date;

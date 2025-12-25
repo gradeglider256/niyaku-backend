@@ -9,13 +9,12 @@ import {
   UseGuards,
   ForbiddenException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CreditAssessmentService } from './credit_assessment.service';
 import {
   CreateEmploymentHistoryDto,
   CreateSalaryHistoryDto,
   CreateCompanyEarningsDto,
-  CreateAssessmentRequestDto,
 } from './dto/credit-assessment.dto';
 import { ResponseUtil } from '../common/utils/response.utils';
 import { PermissionsGuard } from '../common/guards/permissions.guard';
@@ -41,8 +40,17 @@ export class CreditAssessmentController {
   ) {
     const user = req['user'] as Profile;
     const branchID = user.branchID; // Default to user's branch
-    const result = await this.assessmentService.createEmploymentHistory(dto, branchID);
-    return ResponseUtil.success('Employment history added successfully', result);
+    console.log(user);
+    // const rr = user.auth.roles.find(r=> r.)
+    // if()
+    const result = await this.assessmentService.createEmploymentHistory(
+      dto,
+      branchID,
+    );
+    return ResponseUtil.success(
+      'Employment history added successfully',
+      result,
+    );
   }
 
   @Post('salary-history')
@@ -61,21 +69,28 @@ export class CreditAssessmentController {
     return ResponseUtil.success('Company earnings added successfully', result);
   }
 
-  @Post('assess')
+  @Post('assess/:clientId')
   @Permissions('assessment.perform')
-  @ApiOperation({ summary: 'Perform automated credit assessment' })
+  @ApiOperation({ summary: 'Perform automated credit assessment for a client' })
   async performAssessment(
-    @Body() dto: CreateAssessmentRequestDto,
+    @Param('clientId') clientId: string,
     @Req() req: Request,
   ) {
     const user = req['user'] as Profile;
     const branchID = user.branchID;
-    const result = await this.assessmentService.performAssessment(dto, branchID, user.id);
-    return ResponseUtil.success('Credit assessment performed successfully', result);
+    const result = await this.assessmentService.performAssessment(
+      clientId,
+      branchID,
+      user.id,
+    );
+    return ResponseUtil.success(
+      'Credit assessment performed successfully',
+      result,
+    );
   }
 
   @Get('history')
-  @Permissions('assessment.view')
+  @Permissions('assessment.read')
   @ApiOperation({ summary: 'Get assessment history with pagination' })
   @Pagination()
   async getAssessmentHistory(
@@ -84,28 +99,40 @@ export class CreditAssessmentController {
   ) {
     const user = req['user'] as Profile;
 
-    if (pagination.branchId !== undefined && pagination.branchId !== user.branchID) {
+    if (
+      pagination.branchId !== undefined &&
+      pagination.branchId !== user.branchID
+    ) {
       // Permission check for other branches (simplified for now)
       const userPermissions = user.auth.roles
         .flatMap((r) => r.role.permissions)
         .map((p) => p.permission.name);
 
-      if (!userPermissions.includes('branch.view-branch')) {
-        throw new ForbiddenException('Insufficient permissions to view assessments from other branches');
+      if (!userPermissions.includes('branch.read')) {
+        throw new ForbiddenException(
+          'Insufficient permissions to view assessments from other branches',
+        );
       }
     } else {
       pagination.branchId = user.branchID;
     }
 
-    const result = await this.assessmentService.getAssessmentHistory(pagination);
-    return ResponseUtil.success('Assessment history retrieved successfully', result);
+    const result =
+      await this.assessmentService.getAssessmentHistory(pagination);
+    return ResponseUtil.success(
+      'Assessment history retrieved successfully',
+      result,
+    );
   }
 
   @Get(':id')
-  @Permissions('assessment.view')
+  @Permissions('assessment.read')
   @ApiOperation({ summary: 'Get assessment report by ID' })
   async getAssessmentById(@Param('id') id: string) {
     const result = await this.assessmentService.getAssessmentById(id);
-    return ResponseUtil.success('Assessment report retrieved successfully', result);
+    return ResponseUtil.success(
+      'Assessment report retrieved successfully',
+      result,
+    );
   }
 }

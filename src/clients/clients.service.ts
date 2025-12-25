@@ -42,7 +42,7 @@ export class ClientsService {
     private branchRepository: Repository<Branch>,
     private dataSource: DataSource,
     private documentsService: DocumentsService,
-  ) {}
+  ) { }
 
   async createClient(createClientDto: CreateClientDto, branchID: number) {
     // Check if client already exists
@@ -175,31 +175,39 @@ export class ClientsService {
     }
   }
 
-  async getClientById(id: string) {
+  async getClientById(id: string): Promise<Client> {
     const client = await this.clientRepository.findOne({
       where: { id },
-      relations: ['addresses', 'contacts', 'documents', 'branch'],
     });
 
     if (!client) {
       throw new NotFoundException(`Client with ID ${id} not found`);
     }
 
+    const relations = [
+      'addresses',
+      'contacts',
+      'documents',
+      'branch',
+      'assessmentReports',
+    ];
+
     if (client.type === ClientType.BUSINESS) {
-      const businessClient = (await this.clientRepository.findOne({
-        where: { id },
-        relations: [
-          'addresses',
-          'contacts',
-          'documents',
-          'branch',
-          'representatives',
-        ],
-      })) as BusinessClient;
-      return businessClient;
+      relations.push('representatives', 'companyEarnings');
+    } else if (client.type === ClientType.INDIVIDUAL) {
+      relations.push('employmentHistory', 'employmentHistory.salaryHistory');
     }
 
-    return client;
+    const fullClient = await this.clientRepository.findOne({
+      where: { id },
+      relations,
+    });
+
+    if (!fullClient) {
+      throw new NotFoundException(`Client with ID ${id} not found`);
+    }
+
+    return fullClient;
   }
 
   async updateClient(id: string, updateClientDto: UpdateClientDto) {

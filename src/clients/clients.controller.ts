@@ -44,8 +44,7 @@ import { Pagination } from '../common/decorators/pagination.decorator';
 @ApiBearerAuth()
 @UseGuards(PermissionsGuard)
 export class ClientsController {
-  constructor(private readonly clientsService: ClientsService) { }
-
+  constructor(private readonly clientsService: ClientsService) {}
 
   @Post()
   @Permissions('clients.add')

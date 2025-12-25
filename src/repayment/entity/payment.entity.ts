@@ -1,4 +1,11 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Repayment } from './repayment.entity';
 
 @Entity()
 export class Payment {
@@ -16,4 +23,11 @@ export class Payment {
 
   @Column({ type: 'date' })
   paymentDate: string;
+
+  @ManyToOne(() => Repayment, (repayment) => repayment.payments)
+  @JoinColumn({ name: 'repaymentID' })
+  repayment: Repayment;
+
+  @Column({ type: 'timestamp' })
+  createdAt: string;
 }

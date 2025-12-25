@@ -30,17 +30,8 @@ export class SalaryHistory {
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   deductions: number;
 
-  @Column({ type: 'decimal', precision: 12, scale: 2 })
-  netSalary: number;
-
-  @Column({ type: 'varchar', length: 20 })
-  month: string;
-
-  @Column({ type: 'int' })
-  year: number;
-
-  @Column({ type: 'date', nullable: true })
-  payDate: string;
+  @Column({ type: 'varchar', length: 40 })
+  year: string;
 
   @Column({ type: 'boolean', default: false })
   isVerified: boolean;

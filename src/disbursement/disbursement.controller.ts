@@ -30,6 +30,7 @@ import {
   LoanResponseDto,
   UpdateDisbursementDto,
   UpdateLoanDto,
+  ConfirmDisbursementDto,
 } from './dto/disbursement.dto';
 import type { Request } from 'express';
 import { PaginationQueryWithBranchDto } from '../common/dtos/pagination.dtos';
@@ -40,7 +41,7 @@ import { Pagination } from '../common/decorators/pagination.decorator';
 @UseGuards(PermissionsGuard)
 @Controller('disbursement')
 export class DisbursementController {
-  constructor(private readonly disbursementService: DisbursementService) {}
+  constructor(private readonly disbursementService: DisbursementService) { }
 
   @Post('loan')
   @Permissions('loan.add')
@@ -62,7 +63,7 @@ export class DisbursementController {
   }
 
   @Get('loan/:id')
-  @Permissions('loan.view')
+  @Permissions('loan.read')
   @ApiOperation({ summary: 'Get a loan by ID' })
   @ApiResponse({ status: 200, type: LoanResponseDto })
   async getLoan(@Param('id', ParseIntPipe) id: number, @Req() req: Request) {
@@ -72,7 +73,7 @@ export class DisbursementController {
   }
 
   @Get('loans')
-  @Permissions('loan.view')
+  @Permissions('loan.read')
   @ApiOperation({ summary: 'Get all loans with pagination' })
   @Pagination()
   async getLoans(
@@ -176,8 +177,30 @@ export class DisbursementController {
     );
   }
 
+  @Post(':id/confirm')
+  @Permissions('disbursement.add')
+  @ApiOperation({ summary: 'Confirm a pending disbursement and finalize it' })
+  async confirmDisbursement(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() confirmDto: ConfirmDisbursementDto,
+    @Req() req: Request,
+  ) {
+    const user = req['user'] as Profile;
+    const branchID = user.branchID;
+
+    const disbursement = await this.disbursementService.confirmDisbursement(
+      id,
+      confirmDto,
+      branchID,
+    );
+    return ResponseUtil.success(
+      'Disbursement confirmed and finalized successfully',
+      disbursement,
+    );
+  }
+
   @Get(':id')
-  @Permissions('disbursement.view')
+  @Permissions('disbursement.read')
   @ApiOperation({ summary: 'Get a disbursement' })
   @ApiResponse({ status: 200, type: DisbursementResponseDto })
   async getDisbursement(
@@ -196,7 +219,7 @@ export class DisbursementController {
   }
 
   @Get()
-  @Permissions('disbursement.view')
+  @Permissions('disbursement.read')
   @ApiOperation({ summary: 'Get all disbursements with pagination' })
   @Pagination()
   async getDisbursements(
@@ -253,8 +276,7 @@ export class DisbursementController {
       .map((rolePerm) => rolePerm.permission.name);
 
     const hasBranchPermissions = userPermissions.some(
-      (perm) =>
-        perm === 'branch.view-branch' || perm === 'branch.manage-branch',
+      (perm) => perm === 'branch.read' || perm === 'branch.manage',
     );
 
     if (!hasBranchPermissions) {

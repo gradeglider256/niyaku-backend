@@ -26,6 +26,8 @@ export class PermissionsGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const user: Profile = request.user;
+    console.log(user);
+    console.log(user.auth);
 
     if (!user || !user.auth || !user.auth.roles) {
       throw new ForbiddenException('User permissions not found');

@@ -8,9 +8,9 @@ export class CreatePermissionsSeed {
     const permissions = [
       { name: 'employee.add', description: 'Can add new employees' },
       { name: 'employee.manage', description: 'Can manage existing employees' },
-      { name: 'user.read', description: 'Can view users' },
-      { name: 'branch.read', description: 'Can view branches' },
-      { name: 'role.read', description: 'Can view roles' },
+      { name: 'user.read', description: 'Can read users' },
+      { name: 'branch.read', description: 'Can read branches' },
+      { name: 'role.read', description: 'Can read roles' },
       { name: 'branch.manage', description: 'Can manage branches' },
       { name: 'role.manage', description: 'Can manage roles' },
       { name: 'branch.add', description: 'Can add new branches' },
@@ -18,7 +18,7 @@ export class CreatePermissionsSeed {
 
       // Client permissions
       { name: 'clients.add', description: 'Can create new clients' },
-      { name: 'clients.read', description: 'Can view clients' },
+      { name: 'clients.read', description: 'Can read clients' },
       { name: 'clients.update', description: 'Can update client information' },
       { name: 'clients.delete', description: 'Can delete clients' },
       {
@@ -35,15 +35,85 @@ export class CreatePermissionsSeed {
       },
       {
         name: 'clients.documents.read',
-        description: 'Can view documents of clients',
+        description: 'Can read documents of clients',
       },
       {
         name: 'clients.addresses.read',
-        description: 'Can view addresses of clients',
+        description: 'Can read addresses of clients',
       },
       {
         name: 'clients.contacts.read',
-        description: 'Can view contacts of clients',
+        description: 'Can read contacts of clients',
+      },
+
+      // loan and disbursement
+      {
+        name: 'loan.add',
+        description: 'Can add a new loan object',
+      },
+      {
+        name: 'loan.read',
+        description: 'Can read loans and details of the loan',
+      },
+      {
+        name: 'loan.update',
+        description: 'update loan details',
+      },
+      {
+        name: 'loan.delete',
+        description: 'delete a loan.',
+      },
+      {
+        name: 'loan.approve',
+        description: 'can approve a loan',
+      },
+      {
+        name: 'loan.reject',
+        description: 'can reject a loan',
+      },
+
+      // disbursement
+      {
+        name: 'disbursement.add',
+        description: 'Can add a new disbursement object',
+      },
+      {
+        name: 'disbursement.read',
+        description: 'Can read disbursements and details of the disbursement',
+      },
+      {
+        name: 'disbursement.update',
+        description: 'update disbursement details',
+      },
+      {
+        name: 'disbursement.delete',
+        description: 'delete a disbursement.',
+      },
+
+      // Repayment
+      {
+        name: 'repayment.read',
+        description: 'delete a repayments.',
+      },
+      {
+        name: 'repayment.record',
+        description: 'record a repayments.',
+      },
+
+      // Assessment permissions.
+      {
+        name: 'assessment.read',
+        description: 'this allows the user to view a clients assessments,',
+      },
+      {
+        name: 'assessment.perform',
+        description:
+          'this allows the user to perform an assessment on a clients',
+      },
+      {
+        name: 'assessment.manage',
+        description:
+          'allows a user to manage the assessment data such as add clients document, salary history and other relevant details.',
       },
     ];
 

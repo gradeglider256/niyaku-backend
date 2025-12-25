@@ -7,10 +7,10 @@ import {
   Query,
   Req,
   UseGuards,
-  ForbiddenException,
 } from '@nestjs/common';
 import { RepaymentService } from './repayment.service';
 import { CreateRepaymentDto } from './dto/create-repayment.dto';
+import { CreatePaymentDto } from './dto/create-payment.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
@@ -21,7 +21,7 @@ import { PaginationQueryWithBranchDto } from '../common/dtos/pagination.dtos';
 import { Pagination } from '../common/decorators/pagination.decorator';
 
 @ApiTags('Repayments')
-@Controller('repayment')
+@Controller('repayments')
 @ApiBearerAuth()
 @UseGuards(PermissionsGuard)
 export class RepaymentController {
@@ -30,10 +30,7 @@ export class RepaymentController {
   @Post()
   @Permissions('repayment.record')
   @ApiOperation({ summary: 'Record a loan repayment' })
-  async recordPayment(
-    @Body() dto: CreateRepaymentDto,
-    @Req() req: Request,
-  ) {
+  async recordPayment(@Body() dto: CreateRepaymentDto, @Req() req: Request) {
     const user = req['user'] as Profile;
     const branchID = user.branchID;
     const result = await this.repaymentService.createRepayment(dto, branchID);
@@ -49,10 +46,10 @@ export class RepaymentController {
     @Req() req: Request,
   ) {
     const user = req['user'] as Profile;
-    if (pagination.branchId !== undefined && pagination.branchId !== user.branchID) {
-      // Basic permission check
-      pagination.branchId = pagination.branchId;
-    } else {
+    if (
+      pagination.branchId !== undefined &&
+      pagination.branchId !== user.branchID
+    ) {
       pagination.branchId = user.branchID;
     }
 
@@ -64,7 +61,31 @@ export class RepaymentController {
   @Permissions('repayment.read')
   @ApiOperation({ summary: 'Get repayment by ID' })
   async getRepaymentById(@Param('id') id: string) {
-    const result = await this.repaymentService.getRepaymentById(parseInt(id, 10));
-    return ResponseUtil.success('Repayment record retrieved successfully', result);
+    const result = await this.repaymentService.getRepaymentById(
+      parseInt(id, 10),
+    );
+    return ResponseUtil.success(
+      'Repayment record retrieved successfully',
+      result,
+    );
+  }
+
+  @Post(':id/pay')
+  @Permissions('repayment.record')
+  @ApiOperation({ summary: 'Add a payment to a repayment record' })
+  async addPayment(
+    @Param('id') id: string,
+    @Body() dto: CreatePaymentDto,
+    @Req() req: Request,
+  ) {
+    const user = req['user'] as Profile;
+    const branchID = user.branchID;
+
+    const result = await this.repaymentService.addPayment(
+      parseInt(id, 10),
+      dto,
+      branchID,
+    );
+    return ResponseUtil.success('Payment recorded successfully', result);
   }
 }

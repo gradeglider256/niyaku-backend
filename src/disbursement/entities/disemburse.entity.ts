@@ -38,11 +38,11 @@ export abstract class Disbursement {
   @Column({ name: 'type', type: 'varchar' })
   type: string;
 
-  @Column({ type: 'text', nullable: true })
-  remarks?: string;
+  @Column({ type: 'enum', enum: ['mobile', 'bank', 'person'] })
+  remarks: 'mobile' | 'bank' | 'person';
 
-  @Column({ type: 'enum', enum: ['pending', 'disbursed'], default: 'pending' })
-  status: 'pending' | 'disbursed';
+  @Column({ type: 'enum', enum: ['pending', 'disbursed', 'cancelled'], default: 'pending' })
+  status: 'pending' | 'disbursed' | 'cancelled';
 
   @CreateDateColumn()
   createdAt: Date;

@@ -16,10 +16,12 @@ import { RedisDbModule } from './redis_db/redis_db.module';
 import { CommonModule } from './common/common.module';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { DocumentsModule } from './documents/documents.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     CommonModule,
+    ScheduleModule.forRoot(),
     PrometheusModule.register({
       path: '/metrics',
     }),
