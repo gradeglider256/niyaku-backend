@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { Loan } from './entities/loan.entity';
 import {
   Disbursement,
@@ -41,7 +41,7 @@ export class DisbursementService {
     @InjectRepository(Repayment)
     private repaymentRepository: Repository<Repayment>,
     private documentsService: DocumentsService,
-  ) { }
+  ) {}
 
   // --- Loan Operations ---
 
@@ -49,12 +49,12 @@ export class DisbursementService {
     createLoanDto: CreateLoanDto,
     branchID: number,
   ): Promise<Loan> {
-    const emi = this.calculateEMI(
-      createLoanDto.amount,
-      createLoanDto.tenure,
-      createLoanDto.interestRate,
-      createLoanDto.processingFee,
-    );
+    // const emi = this.calculateEMI(
+    //   createLoanDto.amount,
+    //   createLoanDto.tenure,
+    //   createLoanDto.interestRate,
+    //   createLoanDto.processingFee,
+    // );
 
     const totalInterest =
       Number(createLoanDto.amount) *
@@ -69,7 +69,7 @@ export class DisbursementService {
       ...createLoanDto,
       branchID,
       status: 'pending',
-      emi,
+      // emi,
       balance,
     });
     const saved = await this.loanRepository.save(loan);
@@ -92,12 +92,12 @@ export class DisbursementService {
     Object.assign(loan, updateLoanDto);
 
     // Recalculate EMI if any relevant fields are updated
-    loan.emi = this.calculateEMI(
-      loan.amount,
-      loan.tenure,
-      loan.interestRate,
-      loan.processingFee,
-    );
+    // loan.emi = this.calculateEMI(
+    //   loan.amount,
+    //   loan.tenure,
+    //   loan.interestRate,
+    //   loan.processingFee,
+    // );
 
     const saved = await this.loanRepository.save(loan);
     LoggerUtil.logDatabaseCall(`UPDATE loan SET ...`, 0, 'Disbursement');
@@ -186,7 +186,11 @@ export class DisbursementService {
         }
         // Remove the pending one to replace it
         await manager.delete(Disbursement, { id: existingDisbursement.id });
-        LoggerUtil.logDatabaseCall(`DELETE FROM disbursement (replacing pending)`, 0, 'Disbursement');
+        LoggerUtil.logDatabaseCall(
+          `DELETE FROM disbursement (replacing pending)`,
+          0,
+          'Disbursement',
+        );
       }
 
       let disbursement: Disbursement;
@@ -194,7 +198,9 @@ export class DisbursementService {
       switch (createDisbursementDto.type) {
         case 'mobile':
           if (status === 'disbursed' && !createDisbursementDto.transactionID) {
-            throw new BadRequestException('Transaction ID is required for mobile disbursement');
+            throw new BadRequestException(
+              'Transaction ID is required for mobile disbursement',
+            );
           }
           disbursement = manager.create(MobileMoneyDisbursement, {
             ...createDisbursementDto,
@@ -243,7 +249,7 @@ export class DisbursementService {
 
       // Only complete the disbursement if status is 'disbursed'
       if (status === 'disbursed') {
-        await this.finalizeDisbursement(manager, loan, saved);
+        await this.finalizeDisbursement(manager, loan);
       }
 
       return saved;
@@ -274,8 +280,13 @@ export class DisbursementService {
 
       // Save document if provided for person type
       if (disbursement.type === 'person') {
-        if (!confirmDto.document && !(disbursement as PersonDisbursement).signedDocumentID) {
-          throw new BadRequestException('Document upload is required to finalize in-person disbursement');
+        if (
+          !confirmDto.document &&
+          !(disbursement as PersonDisbursement).signedDocumentID
+        ) {
+          throw new BadRequestException(
+            'Document upload is required to finalize in-person disbursement',
+          );
         }
 
         if (confirmDto.document) {
@@ -290,19 +301,21 @@ export class DisbursementService {
 
       // Mobile validation
       if (disbursement.type === 'mobile' && !disbursement['transactionID']) {
-        throw new BadRequestException('Transaction ID is required to finalize mobile disbursement');
+        throw new BadRequestException(
+          'Transaction ID is required to finalize mobile disbursement',
+        );
       }
 
       disbursement.status = 'disbursed';
       const saved = await manager.save(disbursement);
 
-      await this.finalizeDisbursement(manager, disbursement.loan, saved);
+      await this.finalizeDisbursement(manager, disbursement.loan);
 
       return saved;
     });
   }
 
-  private async finalizeDisbursement(manager: any, loan: Loan, disbursement: Disbursement) {
+  private async finalizeDisbursement(manager: EntityManager, loan: Loan) {
     // Update loan status to disbursed
     loan.status = 'disbursed';
     await manager.save(Loan, loan);
@@ -312,15 +325,24 @@ export class DisbursementService {
     repaymentDate.setMonth(repaymentDate.getMonth() + 1);
 
     const totalInterest =
-      Number(loan.amount) * (Number(loan.interestRate) / 100) * (loan.tenure / 12);
-    const monthlyInterest = Number((totalInterest / loan.tenure).toFixed(2));
+      Number(loan.amount) *
+      (Number(loan.interestRate) / 100) *
+      (loan.tenure / 12);
+    // const monthlyInterest = Number((totalInterest / loan.tenure).toFixed(2));
+
+    const amount =
+      (Number(loan.amount) + totalInterest + Number(loan.processingFee)) /
+      loan.tenure;
+
+    console.log(loan);
+    console.log({ amount });
 
     const repayment = manager.create(Repayment, {
       loanID: loan.id,
       clientID: loan.clientID,
       branchID: loan.branchID,
-      amount: loan.emi,
-      interest: monthlyInterest,
+      amount: amount,
+      // interest: monthlyInterest,
       dateToBePaid: repaymentDate.toISOString().split('T')[0],
       status: 'pending',
       createdAt: new Date().toISOString(),

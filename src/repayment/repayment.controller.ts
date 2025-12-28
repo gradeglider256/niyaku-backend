@@ -25,7 +25,7 @@ import { Pagination } from '../common/decorators/pagination.decorator';
 @ApiBearerAuth()
 @UseGuards(PermissionsGuard)
 export class RepaymentController {
-  constructor(private readonly repaymentService: RepaymentService) { }
+  constructor(private readonly repaymentService: RepaymentService) {}
 
   @Post()
   @Permissions('repayment.record')

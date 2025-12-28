@@ -115,6 +115,25 @@ export class CreatePermissionsSeed {
         description:
           'allows a user to manage the assessment data such as add clients document, salary history and other relevant details.',
       },
+
+      //System configuration
+      {
+        name: 'sys-config.read',
+        description: 'allows users to read the current system configuration',
+      },
+      {
+        name: 'sys-config.update',
+        description: 'allows user to update the system configuration',
+      },
+      {
+        name: 'sys-config.manage',
+        description:
+          'for managing different aspects of the system configuration',
+      },
+      {
+        name: 'reports.read',
+        description: 'allows users to access dashboard data.',
+      }
     ];
 
     for (const perm of permissions) {
