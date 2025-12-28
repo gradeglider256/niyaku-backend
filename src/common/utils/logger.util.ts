@@ -2,9 +2,21 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { DatabaseCallLog } from '../interfaces/db.log.interface';
 
+export enum LogLevel {
+  DEBUG = 'DEBUG',
+  INFO = 'INFO',
+  WARN = 'WARN',
+  ERROR = 'ERROR',
+}
+
 export class LoggerUtil {
   private static dbLogPath = path.join(process.cwd(), 'logs', 'database.log');
   private static errorLogPath = path.join(process.cwd(), 'logs', 'error.log');
+  private static appLogPath = path.join(
+    process.cwd(),
+    'logs',
+    'application.log',
+  );
   private static requestCount = 0;
   private static lastRequestTime = Date.now();
   private static requestsPerSecond = 0;
@@ -69,11 +81,16 @@ export class LoggerUtil {
       module,
     };
 
+    // Log to console for immediate visibility
     console.log(logEntry);
 
     const logLine = `[${timestamp}] [${module}] ${file}:${line} ${func}() - Query: ${query} - Duration: ${duration}ms\n`;
 
-    fs.appendFileSync(this.dbLogPath, logLine, 'utf8');
+    try {
+      fs.appendFileSync(this.dbLogPath, logLine, 'utf8');
+    } catch (error) {
+      console.error('Failed to write database log to file:', error);
+    }
   }
 
   /**
@@ -89,7 +106,11 @@ export class LoggerUtil {
       const timestamp = new Date().toISOString();
       const logLine = `[${timestamp}] Requests per second: ${this.requestsPerSecond}\n`;
 
-      fs.appendFileSync(this.dbLogPath, logLine, 'utf8');
+      try {
+        fs.appendFileSync(this.dbLogPath, logLine, 'utf8');
+      } catch (error) {
+        console.error('Failed to write request tracking log to file:', error);
+      }
 
       this.requestCount = 0;
       this.lastRequestTime = now;
@@ -127,11 +148,85 @@ export class LoggerUtil {
       context: additionalContext,
     };
 
-    console.log(logEntry);
+    // Log to console for immediate visibility
+    console.error(logEntry);
 
     const logLine = `[${timestamp}] [${module}] ${file}:${line} ${func}()\nError: ${errorMessage}\nStack: ${stackTrace}\nContext: ${JSON.stringify(additionalContext)}\n${'='.repeat(80)}\n`;
 
-    fs.appendFileSync(this.errorLogPath, logLine, 'utf8');
+    try {
+      fs.appendFileSync(this.errorLogPath, logLine, 'utf8');
+    } catch (error) {
+      console.error('Failed to write error log to file:', error);
+    }
+  }
+
+  /**
+   * Log general application messages (info, warn, debug)
+   */
+  static log(
+    level: LogLevel,
+    message: string,
+    module: string,
+    additionalContext?: Record<string, any>,
+  ): void {
+    const { file, line, func } = this.getStackInfo();
+    const timestamp = new Date().toISOString();
+
+    // const logEntry = {
+    //   timestamp,
+    //   level,
+    //   module,
+    //   file,
+    //   line,
+    //   function: func,
+    //   message,
+    //   context: additionalContext,
+    // };
+
+    // Always log to console for immediate visibility
+    const consoleMessage = `[${timestamp}] [${level}] [${module}] ${message}`;
+    if (level === LogLevel.ERROR || level === LogLevel.WARN) {
+      console.error(consoleMessage, additionalContext || '');
+    } else {
+      console.log(consoleMessage, additionalContext || '');
+    }
+
+    // Write to file
+    const logLine = `[${timestamp}] [${level}] [${module}] ${file}:${line} ${func}()\nMessage: ${message}\nContext: ${JSON.stringify(additionalContext || {})}\n${'='.repeat(80)}\n`;
+
+    try {
+      fs.appendFileSync(this.appLogPath, logLine, 'utf8');
+    } catch (error) {
+      // Fallback to console if file write fails
+      console.error('Failed to write to log file:', error);
+    }
+  }
+
+  /**
+   * Convenience methods for different log levels
+   */
+  static info(
+    message: string,
+    module: string,
+    context?: Record<string, any>,
+  ): void {
+    this.log(LogLevel.INFO, message, module, context);
+  }
+
+  static warn(
+    message: string,
+    module: string,
+    context?: Record<string, any>,
+  ): void {
+    this.log(LogLevel.WARN, message, module, context);
+  }
+
+  static debug(
+    message: string,
+    module: string,
+    context?: Record<string, any>,
+  ): void {
+    this.log(LogLevel.DEBUG, message, module, context);
   }
 
   /**
@@ -143,6 +238,9 @@ export class LoggerUtil {
     }
     if (fs.existsSync(this.errorLogPath)) {
       fs.writeFileSync(this.errorLogPath, '', 'utf8');
+    }
+    if (fs.existsSync(this.appLogPath)) {
+      fs.writeFileSync(this.appLogPath, '', 'utf8');
     }
   }
 }

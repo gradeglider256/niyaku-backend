@@ -43,6 +43,9 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
+# Create logs directory with proper permissions
+RUN mkdir -p /app/logs && chmod 755 /app/logs
+
 EXPOSE 3000
 
 CMD ["node", "dist/main"]

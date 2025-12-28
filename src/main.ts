@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as express from 'express';
+import { LoggerUtil } from './common/utils/logger.util';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -15,7 +16,7 @@ async function bootstrap() {
     origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
-  })
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Niyaku API')
@@ -24,17 +25,27 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
 
-  console.log('Creating Swagger document...');
+  LoggerUtil.info('Creating Swagger document...', 'Bootstrap');
   const document = SwaggerModule.createDocument(app, config);
-  console.log('Swagger document created');
+  LoggerUtil.info('Swagger document created', 'Bootstrap');
 
-  console.log('Setting up Swagger at /docs...');
+  LoggerUtil.info('Setting up Swagger at /docs...', 'Bootstrap');
   SwaggerModule.setup('docs', app, document);
-  console.log('Swagger setup complete');
+  LoggerUtil.info('Swagger setup complete', 'Bootstrap');
 
-  await app.listen(process.env.PORT ?? 3000);
-  console.log(`Application is running on: http://localhost:${process.env.PORT ?? 3000}`);
-  console.log(`Swagger docs available at: http://localhost:${process.env.PORT ?? 3000}/api/docs`);
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port);
+  LoggerUtil.info(
+    `Application is running on: http://localhost:${port}`,
+    'Bootstrap',
+  );
+  LoggerUtil.info(
+    `Swagger docs available at: http://localhost:${port}/api/docs`,
+    'Bootstrap',
+  );
 }
-// eslint-disable-next-line prettier/prettier
-bootstrap().catch((e: any) => console.error(e));
+
+bootstrap().catch((e: Error) => {
+  LoggerUtil.logError(e, 'Bootstrap');
+  process.exit(1);
+});
