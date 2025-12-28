@@ -11,7 +11,7 @@ export class Branch {
   name: string;
 
   @Column({ type: 'bool' })
-  isHeadOffice: string;
+  isHeadOffice: boolean;
 
   @Column({ type: 'varchar', length: 50 })
   countryName: string;

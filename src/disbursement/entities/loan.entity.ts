@@ -46,9 +46,6 @@ export class Loan {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   processingFee: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  emi: number; // estimated monthly income calculated from (processingFee + amount +interest) / tenure
-
   @Column({
     type: 'enum',
     enum: ['pending', 'approved', 'rejected', 'disbursed', 'fully_paid'],

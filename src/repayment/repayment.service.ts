@@ -147,216 +147,6 @@ export class RepaymentService {
     return repayment;
   }
 
-  // async addPayment(repaymentId: number, dto: CreatePaymentDto, branchID: number) {
-  //     return await this.repaymentRepository.manager.transaction(async (manager) => {
-  //         const repayment = await manager.findOne(Repayment, {
-  //             where: { id: repaymentId, branchID },
-  //             relations: ['loan', 'payments'],
-  //         });
-
-  //         if (!repayment) {
-  //             throw new NotFoundException(`Repayment with ID ${repaymentId} not found`);
-  //         }
-
-  //         if (repayment.status === 'paid') {
-  //             throw new BadRequestException('Repayment is already fully paid');
-  //         }
-
-  //         // Create Payment
-  //         const payment = manager.create(Payment, {
-  //             repaymentID: repayment.id,
-  //             amountPaid: dto.amountPaid,
-  //             paymentMethod: dto.paymentMethod,
-  //             paymentDate: dto.paymentDate,
-  //             createdAt: new Date().toISOString(),
-  //         });
-  //         await manager.save(Payment, payment);
-
-  //         // Calculate total paid
-  //         const updatedRepayment = await manager.findOne(Repayment, {
-  //             where: { id: repaymentId },
-  //             relations: ['payments'],
-  //         });
-
-  //         if (!updatedRepayment) {
-  //             throw new NotFoundException(`Repayment with ID ${repaymentId} not found`);
-  //         }
-
-  //         const totalPaid = updatedRepayment.payments.reduce((sum, p) => Number(sum) + Number(p.amountPaid), 0);
-
-  //         // Check if fully paid
-  //         if (totalPaid >= Number(repayment.amount)) {
-  //             // Mark as paid
-  //             repayment.status = 'paid';
-  //             repayment.datePaid = new Date().toISOString().split('T')[0];
-
-  //             // If overpaid, update the repayment amount to reflect reality
-  //             if (totalPaid > Number(repayment.amount)) {
-  //                 repayment.amount = totalPaid;
-  //             }
-
-  //             await manager.save(Repayment, repayment);
-
-  //             // Update Loan Balance
-  //             const loan = repayment.loan;
-  //             loan.balance = Number(loan.balance) - Number(totalPaid);
-
-  //             if (loan.balance <= 0) {
-  //                 loan.balance = 0;
-  //                 loan.status = 'fully_paid';
-  //             }
-  //             await manager.save(Loan, loan);
-
-  //             // Generate next month's repayment if balance > 0
-  //             if (loan.balance > 0) {
-  //                 // Count how many repayments have been paid for this loan to verify tenure progress
-  //                 const paidCount = await manager.count(Repayment, {
-  //                     where: { loanID: loan.id, status: 'paid' }
-  //                 });
-
-  //                 const remainingMonths = loan.tenure - paidCount;
-
-  //                 let nextAmount;
-  //                 if (remainingMonths > 0) {
-  //                     nextAmount = Number(loan.balance) / remainingMonths;
-  //                 } else {
-  //                     // Edge case: tenure possibly exceeded or calculation off, assert remainder
-  //                     nextAmount = Number(loan.balance);
-  //                 }
-
-  //                 // Simple rounding to 2 decimals
-  //                 nextAmount = Math.round(nextAmount * 100) / 100;
-
-  //                 const nextRepaymentDate = new Date(repayment.dateToBePaid);
-  //                 nextRepaymentDate.setMonth(nextRepaymentDate.getMonth() + 1);
-
-  //                 const nextRepayment = manager.create(Repayment, {
-  //                     loanID: loan.id,
-  //                     clientID: loan.clientID,
-  //                     branchID: loan.branchID,
-  //                     amount: nextAmount,
-  //                     dateToBePaid: nextRepaymentDate.toISOString().split('T')[0],
-  //                     status: 'pending',
-  //                     createdAt: new Date().toISOString(),
-  //                     updatedAt: new Date().toISOString(),
-  //                 });
-  //                 await manager.save(Repayment, nextRepayment);
-  //                 LoggerUtil.logDatabaseCall(`INSERT INTO repayment (Next Month)`, 0, 'Repayment');
-  //             }
-  //         }
-
-  //         return { repayment, payment };
-  //     });
-  // }
-
-  //   async addPayment(
-  //     repaymentId: number,
-  //     dto: CreatePaymentDto,
-  //     branchID: number,
-  //   ) {
-  //     return this.repaymentRepository.manager.transaction(async (manager) => {
-  //       // 1. Load repayment WITHOUT payments
-  //       const repayment = await manager.findOne(Repayment, {
-  //         where: { id: repaymentId, branchID },
-  //         relations: ['loan'], // ⛔ DO NOT load payments
-  //       });
-
-  //       if (!repayment) {
-  //         throw new NotFoundException(
-  //           `Repayment with ID ${repaymentId} not found`,
-  //         );
-  //       }
-
-  //       if (repayment.status === 'paid') {
-  //         throw new BadRequestException('Repayment is already fully paid');
-  //       }
-
-  //       // 2. Create payment USING RELATION (not repaymentID)
-  //       const payment = manager.create(Payment, {
-  //         repayment: { id: repayment.id }, // ✅ critical
-  //         amountPaid: dto.amountPaid,
-  //         paymentMethod: dto.paymentMethod,
-  //         paymentDate: dto.paymentDate,
-  //         createdAt: new Date().toISOString(),
-  //       });
-
-  //       await manager.save(Payment, payment);
-
-  //       // 3. Recalculate Total Paid from Payments Table
-  //       const { totalPaid } = await manager
-  //         .createQueryBuilder(Payment, 'p')
-  //         .select('COALESCE(SUM(p.amountPaid), 0)', 'totalPaid')
-  //         .where('p.repaymentID = :repaymentId', { repaymentId })
-  //         .getRawOne();
-
-  //       const currentTotalPaid = Number(totalPaid);
-  //       const repaymentAmount = Number(repayment.amount);
-  //       const isPaid = currentTotalPaid >= repaymentAmount;
-
-  //       // Update Repayment:
-  //       // - Set paidAmount to the calculated sum
-  //       // - Status depends on whether totalPaid >= amount
-  //       const datePaid = isPaid
-  //         ? new Date().toISOString().split('T')[0]
-  //         : undefined;
-
-  //       await manager.update(
-  //         Repayment,
-  //         { id: repayment.id },
-  //         {
-  //           status: isPaid ? 'paid' : 'pending',
-  //           datePaid,
-  //         },
-  //       );
-
-  //       // Update Loan Balance
-  //       // We deduct *this specific payment* from the loan balance.
-  //       // Only strictly valid if loan balance was accurate before.
-  //       const amountPaid = Number(dto.amountPaid);
-  //       const loan = repayment.loan;
-  //       const newLoanBalance = Number(loan.balance) - amountPaid;
-
-  //       await manager.update(
-  //         Loan,
-  //         { id: loan.id },
-  //         {
-  //           balance: newLoanBalance > 0 ? newLoanBalance : 0,
-  //           status: newLoanBalance <= 0 ? 'fully_paid' : loan.status,
-  //         },
-  //       );
-
-  //       // 4. Generate next repayment if needed (only when this repayment becomes fully paid)
-  //       if (isPaid && newLoanBalance > 0) {
-  //         const paidCount = await manager.count(Repayment, {
-  //           where: { loanID: loan.id, status: 'paid' },
-  //         });
-
-  //         const remainingMonths = loan.tenure - paidCount;
-  //         const nextAmount =
-  //           remainingMonths > 0
-  //             ? Math.round((newLoanBalance / remainingMonths) * 100) / 100
-  //             : newLoanBalance;
-
-  //         const nextRepaymentDate = new Date(repayment.dateToBePaid);
-  //         nextRepaymentDate.setMonth(nextRepaymentDate.getMonth() + 1);
-
-  //         const nextRepayment = manager.create(Repayment, {
-  //           loanID: loan.id,
-  //           clientID: loan.clientID,
-  //           branchID: loan.branchID,
-  //           amount: nextAmount,
-  //           dateToBePaid: nextRepaymentDate.toISOString().split('T')[0],
-  //           status: 'pending',
-  //           createdAt: new Date().toISOString(),
-  //           updatedAt: new Date().toISOString(),
-  //         });
-
-  //         await manager.save(Repayment, nextRepayment);
-  //       }
-
-  //       return { repaymentId: repayment.id, payment };
-  //     });
-  //   }
   async addPayment(
     repaymentId: number,
     dto: CreatePaymentDto,
@@ -381,7 +171,7 @@ export class RepaymentService {
 
       // 2. Create payment USING RELATION (not repaymentID)
       const payment = manager.create(Payment, {
-        repayment: { id: repayment.id }, // ✅ critical
+        repayment: { id: repayment.id },
         amountPaid: dto.amountPaid,
         paymentMethod: dto.paymentMethod,
         paymentDate: dto.paymentDate,
@@ -426,10 +216,15 @@ export class RepaymentService {
 
       const totalAmountPaidForLoan = Number(totalPaidForLoan);
       const loan = repayment.loan;
-      const originalLoanAmount = Number(loan.amount);
+      const totalInterest =
+        Number(loan.amount) *
+        (Number(loan.interestRate) / 100) *
+        (loan.tenure / 12);
+      const originalLoanAmount =
+        Number(loan.amount) + totalInterest + Number(loan.processingFee);
 
       // ✅ Calculate true remaining balance based on original loan amount
-      const newLoanBalance = originalLoanAmount - totalAmountPaidForLoan;
+      const newLoanBalance = originalLoanAmount - totalAmountPaidForLoan; // this calculation is incomplete since we need the calculation to include the interest and the processing fee as well
 
       await manager.update(
         Loan,

@@ -23,7 +23,7 @@ export class CreatePatrickSeed {
     if (!branch) {
       branch = manager.create(Branch, {
         name: 'Kampala - Tirupati Mazimall',
-        isHeadOffice: 'true',
+        isHeadOffice: true,
         countryName: 'Uganda',
         countryCode: 'UG',
         address: 'titupati mazima mall',

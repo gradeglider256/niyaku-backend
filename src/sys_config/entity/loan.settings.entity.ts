@@ -5,7 +5,6 @@ export class SystemConfig {
   @PrimaryColumn()
   branchID: number;
 
-  // Use 'decimal' for financial values to ensure precision
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 50000 })
   minAmount: number;
 

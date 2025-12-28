@@ -14,6 +14,9 @@ services:
         condition: service_healthy
       niyaku-redis:
         condition: service_started
+    volumes:
+      - ./logs:/app/logs
+      - .:/usr/src/app          
 
   niyaku-db:
     image: postgres:15
@@ -34,6 +37,7 @@ services:
       retries: 5
     volumes:
       - niyaku_postgres_data:/var/lib/postgresql/data
+      
 
   niyaku-redis:
     image: redis:alpine
