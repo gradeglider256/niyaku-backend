@@ -17,6 +17,11 @@ export class LoggerUtil {
     'logs',
     'application.log',
   );
+  private static requestLogPath = path.join(
+    process.cwd(),
+    'logs',
+    'requests.log',
+  );
   private static requestCount = 0;
   private static lastRequestTime = Date.now();
   private static requestsPerSecond = 0;
@@ -230,6 +235,38 @@ export class LoggerUtil {
   }
 
   /**
+   * Log HTTP request with detailed information
+   */
+  static logRequest(
+    method: string,
+    url: string,
+    statusCode: number,
+    duration: number,
+    ipAddress?: string,
+    userAgent?: string,
+    userId?: string,
+  ): void {
+    const timestamp = new Date().toISOString();
+    const ip = ipAddress || 'unknown';
+    const ua = userAgent || 'unknown';
+    const uid = userId || 'anonymous';
+
+    // Format: [timestamp] METHOD=GET URL=/api/clients STATUS=200 DURATION=45ms IP=192.168.1.1 USER_AGENT=Mozilla/5.0... USER_ID=user-123
+    const logLine = `[${timestamp}] METHOD=${method} URL=${url} STATUS=${statusCode} DURATION=${duration}ms IP=${ip} USER_AGENT=${ua} USER_ID=${uid}\n`;
+
+    // Log to console for immediate visibility
+    console.log(
+      `[${timestamp}] ${method} ${url} ${statusCode} ${duration}ms - IP: ${ip} - User: ${uid}`,
+    );
+
+    try {
+      fs.appendFileSync(this.requestLogPath, logLine, 'utf8');
+    } catch (error) {
+      console.error('Failed to write request log to file:', error);
+    }
+  }
+
+  /**
    * Clear logs (useful for testing or maintenance)
    */
   static clearLogs(): void {
@@ -241,6 +278,9 @@ export class LoggerUtil {
     }
     if (fs.existsSync(this.appLogPath)) {
       fs.writeFileSync(this.appLogPath, '', 'utf8');
+    }
+    if (fs.existsSync(this.requestLogPath)) {
+      fs.writeFileSync(this.requestLogPath, '', 'utf8');
     }
   }
 }

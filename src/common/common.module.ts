@@ -6,10 +6,15 @@ import { RequestTrackingInterceptor } from './interceptors/request-tracker.inter
 import { LoanStatusCron } from './cron/loan-status.cron';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Repayment } from '../repayment/entity/repayment.entity';
+import { ActivityLog } from './entities/activity-log.entity';
+import { ActivityLogModule } from './activity-log/activity-log.module';
 
 @Global()
 @Module({
-  imports: [TypeOrmModule.forFeature([Repayment])],
+  imports: [
+    TypeOrmModule.forFeature([Repayment, ActivityLog]),
+    ActivityLogModule,
+  ],
   providers: [
     {
       provide: APP_FILTER,
@@ -21,6 +26,6 @@ import { Repayment } from '../repayment/entity/repayment.entity';
     },
     LoanStatusCron,
   ],
-  exports: [],
+  exports: [ActivityLogModule],
 })
-export class CommonModule { }
+export class CommonModule {}

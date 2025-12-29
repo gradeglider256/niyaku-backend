@@ -17,6 +17,9 @@ import { Branch } from '../user/entities/branch.entity';
 import { AuthMiddleware } from '../user/auth.middleware';
 import { UserModule } from '../user/user.module';
 import { DocumentsModule } from '../documents/documents.module';
+import { EmploymentHistory } from '../credit_assessment/entities/employment.entity';
+import { SalaryHistory } from '../credit_assessment/entities/salary.entity';
+import { CompanyEarnings } from '../credit_assessment/entities/company-earnings.entity';
 
 @Module({
   imports: [
@@ -29,6 +32,9 @@ import { DocumentsModule } from '../documents/documents.module';
       ClientDocument,
       BusinessRepresentative,
       Branch,
+      EmploymentHistory,
+      SalaryHistory,
+      CompanyEarnings,
     ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
