@@ -23,10 +23,10 @@ import { ResponseUtil } from '../utils/response.utils';
 @ApiBearerAuth()
 @UseGuards(PermissionsGuard)
 export class ActivityLogController {
-  constructor(private readonly activityLogService: ActivityLogService) {}
+  constructor(private readonly activityLogService: ActivityLogService) { }
 
   @Get()
-  @Permissions('view:activity_logs')
+  @Permissions('activity_logs.read')
   @ApiOperation({ summary: 'Get activity logs with filtering and pagination' })
   @ApiResponse({
     status: 200,
@@ -46,7 +46,7 @@ export class ActivityLogController {
   }
 
   @Get(':id')
-  @Permissions('view:activity_logs')
+  @Permissions('activity_logs.read')
   @ApiOperation({ summary: 'Get a single activity log by ID' })
   @ApiResponse({
     status: 200,

@@ -79,7 +79,7 @@ export class UserController {
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async getProfile(@Req() req: Request) {
     const user = req['user'] as any;
-    const profile = await this.userService.getProfile(user.id);
+    const profile = await this.userService.getProfileForDisplay(user.id);
     return ResponseUtil.success('Profile retrieved', profile);
   }
 

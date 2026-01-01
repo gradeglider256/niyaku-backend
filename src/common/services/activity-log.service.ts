@@ -25,7 +25,7 @@ export class ActivityLogService {
   constructor(
     @InjectRepository(ActivityLog)
     private activityLogRepository: Repository<ActivityLog>,
-  ) {}
+  ) { }
 
   /**
    * Create a new activity log entry

@@ -97,6 +97,41 @@ export class UserService {
   }
 
   @TrackDbCall('UserModule')
+  async getProfileForDisplay(userId: string) {
+    const profile = await this.entityManager.findOne(Profile, {
+      where: { id: userId },
+      select: {
+        id: true,
+        firstName: true,
+        middleName: true,
+        lastName: true,
+        email: true,
+        gender: true,
+        profile: true,
+        branchID: true,
+        dateHired: true,
+        address: true,
+        mobileNumber: true,
+        branch: {
+          name: true,
+          isHeadOffice: true,
+          countryName: true,
+          countryCode: true,
+          address: true,
+          phone: true,
+          email: true,
+        },
+      },
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Profile not found');
+    }
+
+    return profile;
+  }
+
+  @TrackDbCall('UserModule')
   async updateProfile(userId: string, dto: ChangeProfileDto) {
     const profile = await this.entityManager.findOne(Profile, {
       where: { id: userId },

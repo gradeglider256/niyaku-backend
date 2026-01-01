@@ -18,7 +18,7 @@ export class ActivityLogInterceptor implements NestInterceptor {
   constructor(
     private activityLogService: ActivityLogService,
     private reflector: Reflector,
-  ) {}
+  ) { }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const ctx = context.switchToHttp();
@@ -33,13 +33,32 @@ export class ActivityLogInterceptor implements NestInterceptor {
 
     // Extract request details
     const endpoint = request.url.split('?')[0];
-    const user = request.user as Profile;
-    const userId = user?.id || user?.auth?.id || null;
-    const userEmail = user?.email || null;
-    const userRoles = user?.auth?.roles
-      ?.map((ur) => ur.role?.name)
-      .filter(Boolean);
-    const branchID = user?.branchID || null;
+    const user = request.user as any; // Cast to any to handle different user structures
+
+    let userId = null;
+    let userEmail = null;
+    let userRoles = null;
+    let branchID = null;
+
+    if (user) {
+      // Handle full Profile object
+      if (user.id) userId = user.id;
+      // Handle JWT payload
+      else if (user.sub) userId = user.sub;
+
+      // Handle nested auth object
+      if (!userId && user.auth?.id) userId = user.auth.id;
+
+      if (user.email) userEmail = user.email;
+
+      if (user.branchID) branchID = user.branchID;
+
+      if (user.auth?.roles) {
+        userRoles = user.auth.roles
+          .map((ur) => ur.role?.name)
+          .filter(Boolean);
+      }
+    }
 
     // Extract IP address
     let ipAddress = request.ip;
@@ -100,6 +119,15 @@ export class ActivityLogInterceptor implements NestInterceptor {
           let finalEntityId = entityId;
           if (!finalEntityId && responseData) {
             finalEntityId = this.extractEntityIdFromResponse(responseData);
+          }
+
+          // Fallback: If userId or branchID is missing, try to extract from response (e.g., auth/signin)
+          if ((!userId || !branchID) && responseData?.data?.user) {
+            const respUser = responseData.data.user;
+            if (!userId && respUser.id) userId = respUser.id;
+            if (!branchID && respUser.branchID) branchID = respUser.branchID;
+            if (!userEmail && respUser.email) userEmail = respUser.email;
+            // We could also extract roles if needed
           }
 
           // Create activity log

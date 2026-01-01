@@ -1,0 +1,421 @@
+{
+  "message": "Profile retrieved",
+  "data": {
+    "id": "12345678901234",
+    "firstName": "Patrick",
+    "email": "patrick.aikonia@gmail.com",
+    "lastName": "Aikonia",
+    "middleName": "",
+    "dateOfBirth": "1990-01-01",
+    "gender": "male",
+    "profile": "default",
+    "branchID": 1,
+    "dateHired": "2025-12-25",
+    "address": "123 Main St",
+    "mobileNumber": "1234567890",
+    "auth": {
+      "id": "12345678901234",
+      "emailVerificationCode": "",
+      "emailVerificationInitAt": "2025-12-25T11:00:33.379Z",
+      "emailVerifiedAt": "2025-12-25T11:00:33.379Z",
+      "mobileVerificationCode": "",
+      "mobileVerificationInitAt": "2025-12-25T11:00:33.379Z",
+      "mobileVerifiedAt": "2025-12-25T11:00:33.379Z",
+      "recoveryCode": "",
+      "recoveryCodeInitAt": "2025-12-25T11:00:33.379Z",
+      "recoveryCodeUsedAt": "2025-12-25T11:00:33.379Z",
+      "salt": "$2b$10$En6.jEO/zRCqEkGJUJEsAO",
+      "roles": [
+        {
+          "id": 1,
+          "userID": "12345678901234",
+          "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+          "branch": null,
+          "role": {
+            "id": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+            "name": "admin",
+            "description": "Administrator",
+            "level": "global",
+            "permissions": [
+              {
+                "id": 1,
+                "permissionID": 1,
+                "permission": {
+                  "id": 1,
+                  "name": "employee.add",
+                  "description": "Can add new employees"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 2,
+                "permissionID": 2,
+                "permission": {
+                  "id": 2,
+                  "name": "employee.manage",
+                  "description": "Can manage existing employees"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 3,
+                "permissionID": 3,
+                "permission": {
+                  "id": 3,
+                  "name": "user.read",
+                  "description": "Can read users"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 4,
+                "permissionID": 4,
+                "permission": {
+                  "id": 4,
+                  "name": "branch.read",
+                  "description": "Can read branches"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 5,
+                "permissionID": 5,
+                "permission": {
+                  "id": 5,
+                  "name": "role.read",
+                  "description": "Can read roles"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 6,
+                "permissionID": 6,
+                "permission": {
+                  "id": 6,
+                  "name": "branch.manage",
+                  "description": "Can manage branches"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 7,
+                "permissionID": 7,
+                "permission": {
+                  "id": 7,
+                  "name": "role.manage",
+                  "description": "Can manage roles"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 8,
+                "permissionID": 8,
+                "permission": {
+                  "id": 8,
+                  "name": "branch.add",
+                  "description": "Can add new branches"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 9,
+                "permissionID": 9,
+                "permission": {
+                  "id": 9,
+                  "name": "role.add",
+                  "description": "Can add new roles"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 10,
+                "permissionID": 10,
+                "permission": {
+                  "id": 10,
+                  "name": "clients.add",
+                  "description": "Can create new clients"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 11,
+                "permissionID": 11,
+                "permission": {
+                  "id": 11,
+                  "name": "clients.read",
+                  "description": "Can read clients"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 12,
+                "permissionID": 12,
+                "permission": {
+                  "id": 12,
+                  "name": "clients.update",
+                  "description": "Can update client information"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 13,
+                "permissionID": 13,
+                "permission": {
+                  "id": 13,
+                  "name": "clients.delete",
+                  "description": "Can delete clients"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 14,
+                "permissionID": 14,
+                "permission": {
+                  "id": 14,
+                  "name": "clients.documents.add",
+                  "description": "Can add documents to clients"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 15,
+                "permissionID": 15,
+                "permission": {
+                  "id": 15,
+                  "name": "clients.addresses.add",
+                  "description": "Can add addresses to clients"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 16,
+                "permissionID": 16,
+                "permission": {
+                  "id": 16,
+                  "name": "clients.contacts.create",
+                  "description": "Can add contacts to clients"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 17,
+                "permissionID": 17,
+                "permission": {
+                  "id": 17,
+                  "name": "clients.documents.read",
+                  "description": "Can read documents of clients"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 18,
+                "permissionID": 18,
+                "permission": {
+                  "id": 18,
+                  "name": "clients.addresses.read",
+                  "description": "Can read addresses of clients"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 19,
+                "permissionID": 19,
+                "permission": {
+                  "id": 19,
+                  "name": "clients.contacts.read",
+                  "description": "Can read contacts of clients"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 20,
+                "permissionID": 20,
+                "permission": {
+                  "id": 20,
+                  "name": "loan.add",
+                  "description": "Can add a new loan object"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 21,
+                "permissionID": 21,
+                "permission": {
+                  "id": 21,
+                  "name": "loan.read",
+                  "description": "Can read loans and details of the loan"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 22,
+                "permissionID": 22,
+                "permission": {
+                  "id": 22,
+                  "name": "loan.update",
+                  "description": "update loan details"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 23,
+                "permissionID": 23,
+                "permission": {
+                  "id": 23,
+                  "name": "loan.delete",
+                  "description": "delete a loan."
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 24,
+                "permissionID": 24,
+                "permission": {
+                  "id": 24,
+                  "name": "loan.approve",
+                  "description": "can approve a loan"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 25,
+                "permissionID": 25,
+                "permission": {
+                  "id": 25,
+                  "name": "loan.reject",
+                  "description": "can reject a loan"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 26,
+                "permissionID": 26,
+                "permission": {
+                  "id": 26,
+                  "name": "disbursement.add",
+                  "description": "Can add a new disbursement object"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 27,
+                "permissionID": 27,
+                "permission": {
+                  "id": 27,
+                  "name": "disbursement.read",
+                  "description": "Can read disbursements and details of the disbursement"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 28,
+                "permissionID": 28,
+                "permission": {
+                  "id": 28,
+                  "name": "disbursement.update",
+                  "description": "update disbursement details"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 29,
+                "permissionID": 29,
+                "permission": {
+                  "id": 29,
+                  "name": "disbursement.delete",
+                  "description": "delete a disbursement."
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 30,
+                "permissionID": 30,
+                "permission": {
+                  "id": 30,
+                  "name": "repayment.read",
+                  "description": "delete a repayments."
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 31,
+                "permissionID": 31,
+                "permission": {
+                  "id": 31,
+                  "name": "repayment.record",
+                  "description": "record a repayments."
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 32,
+                "permissionID": 32,
+                "permission": {
+                  "id": 32,
+                  "name": "assessment.read",
+                  "description": "this allows the user to view a clients assessments,"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 33,
+                "permissionID": 33,
+                "permission": {
+                  "id": 33,
+                  "name": "assessment.perform",
+                  "description": "this allows the user to perform an assessment on a clients"
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              },
+              {
+                "id": 34,
+                "permissionID": 34,
+                "permission": {
+                  "id": 34,
+                  "name": "assessment.manage",
+                  "description": "allows a user to manage the assessment data such as add clients document, salary history and other relevant details."
+                },
+                "roleID": "6847f5c3-e29e-4eab-91b4-c0c5ef852b76",
+                "isPermissionActive": true
+              }
+            ]
+          }
+        }
+      ],
+      "isTemporaryPassword": true
+    }
+  }
+}

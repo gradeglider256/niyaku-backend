@@ -1,4 +1,11 @@
-import { Entity, Column, PrimaryColumn, JoinColumn, OneToOne, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryColumn,
+  JoinColumn,
+  OneToOne,
+  ManyToOne,
+} from 'typeorm';
 import { Auth } from './auth.entity';
 import { Branch } from './branch.entity';
 

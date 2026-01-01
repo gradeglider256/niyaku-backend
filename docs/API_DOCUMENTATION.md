@@ -58,6 +58,15 @@ Response:
 - **Auth**: Required
 - **Response**: User profile with roles and permissions
 
+#### Get Roles
+- **GET** `/api/auth/roles`
+- **Description**: Get paginated list of roles with permissions
+- **Auth**: Required
+- **Query Parameters**: 
+  - `page`: Page number (default: 1)
+  - `pageSize`: Items per page (default: 25)
+- **Response**: Paginated list of roles
+
 ### Client Management
 
 #### Create Client

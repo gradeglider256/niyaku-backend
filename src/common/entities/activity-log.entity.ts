@@ -21,7 +21,7 @@ export class ActivityLog {
   id: string;
 
   @Column({ type: 'varchar', length: 100 })
-  @Index()
+  // @Index()
   actionType: string;
 
   @Column({ type: 'varchar', length: 10 })
@@ -31,7 +31,7 @@ export class ActivityLog {
   endpoint: string;
 
   @Column({ type: 'varchar', length: 14, nullable: true })
-  @Index()
+  // @Index()
   userId: string | null;
 
   @ManyToOne(() => Profile, { nullable: true })
@@ -45,7 +45,7 @@ export class ActivityLog {
   userRoles: string[] | null;
 
   @Column({ type: 'int', nullable: true })
-  @Index()
+  // @Index()
   branchID: number | null;
 
   @ManyToOne(() => Branch, { nullable: true })
@@ -68,7 +68,6 @@ export class ActivityLog {
   userAgent: string | null;
 
   @Column({ type: 'timestamp' })
-  @Index()
   timestamp: Date;
 
   @Column({ type: 'jsonb', nullable: true })

@@ -4,7 +4,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ActivityLog } from '../entities/activity-log.entity';
 import { ActivityLogService } from '../services/activity-log.service';
 import { ActivityLogController } from '../controllers/activity-log.controller';
-import { ActivityLogInterceptor } from '../interceptors/activity-log.interceptor';
 import { UserModule } from '../../user/user.module';
 
 @Global()
@@ -13,11 +12,7 @@ import { UserModule } from '../../user/user.module';
   controllers: [ActivityLogController],
   providers: [
     ActivityLogService,
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: ActivityLogInterceptor,
-    },
   ],
   exports: [ActivityLogService],
 })
-export class ActivityLogModule {}
+export class ActivityLogModule { }

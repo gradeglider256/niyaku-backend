@@ -133,7 +133,13 @@ export class CreatePermissionsSeed {
       {
         name: 'reports.read',
         description: 'allows users to access dashboard data.',
-      }
+      },
+
+      //Activity log permissions
+      {
+        name: 'activity_logs.read',
+        description: 'allows users to view activity logs',
+      },
     ];
 
     for (const perm of permissions) {

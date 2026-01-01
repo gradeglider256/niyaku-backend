@@ -1,0 +1,805 @@
+{
+  "messages": [
+    {
+      "role": "system", 
+      "content":"You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client."
+    },
+    {
+      "role": "user",
+      "message": "What is the user database Architecture"
+    },
+    {
+      "role": "assistant",
+      "message": "There are multiple entities in the user entity for handling different aspects of the user database.
+         1. `Auth` Entity (Table: `auth`)
+            - id: Primary Key, varchar(14)
+            - emailVerificationCode: varchar(9)
+            - emailVerificationInitAt: timestamp
+            - emailVerifiedAt: timestamp
+            - mobileVerificationCode: varchar(9)
+            - mobileVerificationInitAt: timestamp
+            - mobileVerifiedAt: timestamp
+            - recoveryCode: varchar(8)
+            - recoveryCodeInitAt: timestamp
+            - recoveryCodeUsedAt: timestamp
+            - password: varchar (hidden by default)
+            - salt: varchar
+            - isTemporaryPassword: boolean (default: false)
+            - Relationships: One-to-one with Profile, One-to-many with AuthDevice, One-to-many with UserRole.
+
+
+        2. `AuthDevice` Entity (Table: `auth_device`)
+            - id: Primary Key, auto-incrementing
+            - userID: varchar(14) (Foreign Key to Auth.id)
+            - token: text
+            - deviceTFA: varchar(12)
+            - refreshToken: text
+            - deviceID: varchar(55)
+            - lastSignin: date (nullable)
+            - Relationships: Many-to-one with Auth.
+
+
+        3. `AuthLog` Entity (Table: `auth_log`)
+            - id: Primary Key, auto-incrementing
+            - type: enum ('assignment', 'removal', 'temporary_assignment', 'temporary_removal', 'role_creation', 'role_deletion', 'add_role_permission', 'remove_role_permission')
+            - user_id: string (Foreign Key to Auth.id)
+            - change_affects: string (Foreign Key to Auth.id)
+            - description: string
+            - date: string
+            - Relationships: Many-to-one with Auth (for user_id and change_affects).
+
+
+        4. `Branch` Entity (Table: `branch`)
+            - id: Primary Key, auto-incrementing
+            - name: varchar(50)
+            - isHeadOffice: boolean
+            - countryName: varchar(50)
+            - countryCode: varchar(2)
+            - address: varchar(255)
+            - phone: varchar(15) (optional)
+            - email: varchar(255) (optional)
+            - Relationships: One-to-many with Profile.
+
+
+        5. `Permission` Entity (Table: `permission`)
+            - id: Primary Key, auto-incrementing
+            - name: varchar(50)
+            - description: text
+
+
+        6. `Profile` Entity (Table: `profile`)
+            - id: Primary Key, varchar(14) (Foreign Key to Auth.id)
+            - firstName: varchar(50)
+            - email: varchar (unique)
+            - lastName: varchar(50)
+            - middleName: varchar(50)
+            - dateOfBirth: date
+            - gender: enum ('male', 'female')
+            - profile: varchar(50)
+            - branchID: bigint (Foreign Key to Branch.id)
+            - dateHired: date
+            - address: varchar (nullable)
+            - mobileNumber: varchar (nullable)
+            - Relationships: One-to-one with Auth, Many-to-one with Branch.
+
+
+        7. `Role` Entity (Table: `role`)
+            - id: Primary Key, uuid
+            - name: varchar(255)
+            - description: text
+            - level: enum ('global', 'branch') (default: 'branch')
+            - Relationships: One-to-many with RolePermissions.
+
+
+        8. `RolePermissions` Entity (Table: `role_permissions`)
+            - id: Primary Key, auto-incrementing
+            - permissionID: bigint (Foreign Key to Permission.id)
+            - roleID: uuid (Foreign Key to Role.id)
+            - isPermissionActive: boolean (default: true)
+            - Relationships: Many-to-one with Permission, Many-to-one with Role.
+
+
+        9. `TemporaryPermission` Entity (Table: `temporary_permission`)
+            - id: Primary Key, auto-incrementing
+            - permissionID: bigint (Foreign Key to Permission.id)
+            - expiresAt: timestamp
+            - userID: varchar(14) (Foreign Key to Auth.id)
+            - Relationships: Many-to-one with Permission, Many-to-one with Auth.
+
+
+        10. `UserRole` Entity (Table: `user_role`)
+            - id: Primary Key, auto-incrementing
+            - userID: varchar(14) (Foreign Key to Auth.id)
+            - roleID: uuid (Foreign Key to Role.id)
+            - branch: bigint (nullable)
+            - Relationships: Many-to-one with Auth, Many-to-one with Role.  
+      "
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system", 
+      "content":"You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client."
+    },
+    {
+      "role": "user",
+      "message": "What is the documentation for the new sign in"
+    },
+    {
+      "role": "assistant",
+      "message": "Sign-in Endpoint Documentation\n\n  POST /auth/signin\n\n  This endpoint allows users to authenticate and receive access and refresh tokens.\n\n  Request Body (DTO)\n\n\n  `SignInDto` (src/user/dto/signin.dto.ts)\n\n\n\n    1 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';\n    2 \n    3 export class SignInDto {\n    4     @IsEmail()\n    5     @IsNotEmpty()\n    6     email: string; // User's email address. Must be a valid email format and not empty.\n    7 \n    8     @IsString()\n    9     @IsNotEmpty()\n   10     @MinLength(6)\n   11     password: string; // User's password. Must be a string, not empty, and at least 6 characters long.\n   12 }\n\n\n  Successful Response (Status: 200 OK)\n\n\n  Return Type: SuccessResponse<SignInSuccessData>\n\n\n\n    1 interface SuccessResponse<T> {\n    2   message: string;\n    3   data?: T;\n    4 }\n    5 \n    6 interface SignInSuccessData {\n    7   accessToken: string; // JWT access token for authenticated requests.\n    8   refreshToken: string; // JWT refresh token for obtaining new access tokens.\n    9   user: {\n   10     id: string;\n   11     email: string;\n   12     firstName: string;\n   13     lastName: string;\n   14     middleName: string;\n   15     roles: Array<{\n   16       id: string;\n   17       name: string;\n   18       description: string;\n   19       level: 'global' | 'branch';\n   20       // Potentially other role properties, but these are the main ones returned.\n   21     }>;\n   22   };\n   23 }\n\n\n  Example Successful Response:\n\n\n\n    1 {\n    2   \"message\": \"Signin successful\",\n    3   \"data\": {\n    4     \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    5     \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    6     \"user\": {\n    7       \"id\": \"12345678901234\",\n    8       \"email\": \"user@example.com\",\n    9       \"firstName\": \"John\",\n   10       \"lastName\": \"Doe\",\n   11       \"middleName\": \"\",\n   12       \"roles\": [\n   13         {\n   14           \"id\": \"a1b2c3d4-e5f6-7890-1234-567890abcdef\",\n   15           \"name\": \"Admin\",\n   16           \"description\": \"Administrator role\",\n   17           \"level\": \"global\"\n   18         }\n   19       ]\n   20     }\n   21   }\n   22 }\n\n\n  Error States\n\n  The endpoint utilizes a GlobalExceptionFilter (src/common/filters/global-exception.filter.ts) to standardize error responses.\n\n  Return Type for Errors: ErrorResponse\n\n\n\n   1 interface ErrorResponse {\n   2   code: number;    // HTTP status code.\n   3   error: string;   // A short, descriptive error message.\n   4   message: string; // A more detailed message, often user-friendly.\n   5 }\n\n\n  1. `401 Unauthorized` - Invalid Credentials\n\n\n   * Description: Occurs when the provided email does not correspond to a registered user, or the password does not match the user's record.\n   * Triggered by:\n       * if (!profile || !profile.auth): Email not found.\n       * if (!authWithPassword || !authWithPassword.password): User's authentication data is incomplete.\n       * if (!isMatch): Incorrect password.\n   * Example Error Response:\n\n\n\n   1     {\n   2       \"code\": 401,\n   3       \"error\": \"Unauthorized\",\n   4       \"message\": \"Invalid credentials\"\n   5     }\n\n\n\n\n   1     {\n   2       \"code\": 401,\n   3       \"error\": \"Unauthorized\",\n   4       \"message\": \"Incorrect password\"\n   5     }\n\n\n  2. `400 Bad Request` - Validation Errors\n\n\n   * Description: Occurs when the SignInDto fails validation checks (e.g., email is not a valid email format, password is too short or missing).\n   * Triggered by: class-validator decorators on SignInDto properties.\n   * Example Error Response:\n\n\n\n   1     {\n   2       \"code\": 400,\n   3       \"error\": \"Bad Request\",\n   4       \"message\": \"Validation failed (email is invalid)\"\n   5     }\n\n\n\n\n   1     {\n   2       \"code\": 400,\n   3       \"error\": \"Bad Request\",\n   4       \"message\": \"Validation failed (password must be longer than or equal to 6 characters)\"\n   5     }\n  3. `500 Internal Server Error` - Unexpected Errors\n   * Description: Occurs for any unhandled exceptions or unexpected server-side issues.\n   * Triggered by: Any unforeseen errors during the sign-in process not explicitly caught by HttpException or other specific error handling.\n   * Example Error Response:\n   1     {\n   2       \"code\": 500,\n   3       \"error\": \"Internal server error\",\n   4       \"message\": \"An unexpected error occurred\"\n   5     }"
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system", 
+      "content":"You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client."
+    },
+    {
+      "role": "user",
+      "message": "what happens when a user tries to signin with a wrong password"
+    },
+    {
+      "role": "assistant",
+      "message": "from the documentation of the signin api endpoint: Sign-in Endpoint Documentation\n\n  POST /auth/signin\n\n  This endpoint allows users to authenticate and receive access and refresh tokens.\n\n  Request Body (DTO)\n\n\n  `SignInDto` (src/user/dto/signin.dto.ts)\n\n\n\n    1 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';\n    2 \n    3 export class SignInDto {\n    4     @IsEmail()\n    5     @IsNotEmpty()\n    6     email: string; // User's email address. Must be a valid email format and not empty.\n    7 \n    8     @IsString()\n    9     @IsNotEmpty()\n   10     @MinLength(6)\n   11     password: string; // User's password. Must be a string, not empty, and at least 6 characters long.\n   12 }\n\n\n  Successful Response (Status: 200 OK)\n\n\n  Return Type: SuccessResponse<SignInSuccessData>\n\n\n\n    1 interface SuccessResponse<T> {\n    2   message: string;\n    3   data?: T;\n    4 }\n    5 \n    6 interface SignInSuccessData {\n    7   accessToken: string; // JWT access token for authenticated requests.\n    8   refreshToken: string; // JWT refresh token for obtaining new access tokens.\n    9   user: {\n   10     id: string;\n   11     email: string;\n   12     firstName: string;\n   13     lastName: string;\n   14     middleName: string;\n   15     roles: Array<{\n   16       id: string;\n   17       name: string;\n   18       description: string;\n   19       level: 'global' | 'branch';\n   20       // Potentially other role properties, but these are the main ones returned.\n   21     }>;\n   22   };\n   23 }\n\n\n  Example Successful Response:\n\n\n\n    1 {\n    2   \"message\": \"Signin successful\",\n    3   \"data\": {\n    4     \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    5     \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    6     \"user\": {\n    7       \"id\": \"12345678901234\",\n    8       \"email\": \"user@example.com\",\n    9       \"firstName\": \"John\",\n   10       \"lastName\": \"Doe\",\n   11       \"middleName\": \"\",\n   12       \"roles\": [\n   13         {\n   14           \"id\": \"a1b2c3d4-e5f6-7890-1234-567890abcdef\",\n   15           \"name\": \"Admin\",\n   16           \"description\": \"Administrator role\",\n   17           \"level\": \"global\"\n   18         }\n   19       ]\n   20     }\n   21   }\n   22 }\n\n\n  Error States\n\n  The endpoint utilizes a GlobalExceptionFilter (src/common/filters/global-exception.filter.ts) to standardize error responses.\n\n  Return Type for Errors: ErrorResponse\n\n\n\n   1 interface ErrorResponse {\n   2   code: number;    // HTTP status code.\n   3   error: string;   // A short, descriptive error message.\n   4   message: string; // A more detailed message, often user-friendly.\n   5 }\n\n\n  1. `401 Unauthorized` - Invalid Credentials\n\n\n   * Description: Occurs when the provided email does not correspond to a registered user, or the password does not match the user's record.\n   * Triggered by:\n       * if (!profile || !profile.auth): Email not found.\n       * if (!authWithPassword || !authWithPassword.password): User's authentication data is incomplete.\n       * if (!isMatch): Incorrect password.\n   * Example Error Response:\n\n\n\n   1     {\n   2       \"code\": 401,\n   3       \"error\": \"Unauthorized\",\n   4       \"message\": \"Invalid credentials\"\n   5     }\n\n\n\n\n   1     {\n   2       \"code\": 401,\n   3       \"error\": \"Unauthorized\",\n   4       \"message\": \"Incorrect password\"\n   5     }\n\n\n  2. `400 Bad Request` - Validation Errors\n\n\n   * Description: Occurs when the SignInDto fails validation checks (e.g., email is not a valid email format, password is too short or missing).\n   * Triggered by: class-validator decorators on SignInDto properties.\n   * Example Error Response:\n\n\n\n   1     {\n   2       \"code\": 400,\n   3       \"error\": \"Bad Request\",\n   4       \"message\": \"Validation failed (email is invalid)\"\n   5     }\n\n\n\n\n   1     {\n   2       \"code\": 400,\n   3       \"error\": \"Bad Request\",\n   4       \"message\": \"Validation failed (password must be longer than or equal to 6 characters)\"\n   5     }\n  3. `500 Internal Server Error` - Unexpected Errors\n   * Description: Occurs for any unhandled exceptions or unexpected server-side issues.\n   * Triggered by: Any unforeseen errors during the sign-in process not explicitly caught by HttpException or other specific error handling.\n   * Example Error Response:\n   1     {\n   2       \"code\": 500,\n   3       \"error\": \"Internal server error\",\n   4       \"message\": \"An unexpected error occurred\"\n   5     }, the user will receive a status response with a status of 401 with a body of { \"code\": 401, \"error\": \"Unauthorized\", \"message\": \"Incorrect password\"}"
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system", 
+      "content":"You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client."
+    },
+    {
+      "role": "user",
+      "message": "A user is trying to signin with a password that is less than 6 characters, what results will he receive?"
+    },
+    {
+      "role": "assistant",
+      "message": "Base on the documentation for niyaku signin api enpoint, Sign-in Endpoint Documentation\n\n  POST /auth/signin\n\n  This endpoint allows users to authenticate and receive access and refresh tokens.\n\n  Request Body (DTO)\n\n\n  `SignInDto` (src/user/dto/signin.dto.ts)\n\n\n\n    1 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';\n    2 \n    3 export class SignInDto {\n    4     @IsEmail()\n    5     @IsNotEmpty()\n    6     email: string; // User's email address. Must be a valid email format and not empty.\n    7 \n    8     @IsString()\n    9     @IsNotEmpty()\n   10     @MinLength(6)\n   11     password: string; // User's password. Must be a string, not empty, and at least 6 characters long.\n   12 }\n\n\n  Successful Response (Status: 200 OK)\n\n\n  Return Type: SuccessResponse<SignInSuccessData>\n\n\n\n    1 interface SuccessResponse<T> {\n    2   message: string;\n    3   data?: T;\n    4 }\n    5 \n    6 interface SignInSuccessData {\n    7   accessToken: string; // JWT access token for authenticated requests.\n    8   refreshToken: string; // JWT refresh token for obtaining new access tokens.\n    9   user: {\n   10     id: string;\n   11     email: string;\n   12     firstName: string;\n   13     lastName: string;\n   14     middleName: string;\n   15     roles: Array<{\n   16       id: string;\n   17       name: string;\n   18       description: string;\n   19       level: 'global' | 'branch';\n   20       // Potentially other role properties, but these are the main ones returned.\n   21     }>;\n   22   };\n   23 }\n\n\n  Example Successful Response:\n\n\n\n    1 {\n    2   \"message\": \"Signin successful\",\n    3   \"data\": {\n    4     \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    5     \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    6     \"user\": {\n    7       \"id\": \"12345678901234\",\n    8       \"email\": \"user@example.com\",\n    9       \"firstName\": \"John\",\n   10       \"lastName\": \"Doe\",\n   11       \"middleName\": \"\",\n   12       \"roles\": [\n   13         {\n   14           \"id\": \"a1b2c3d4-e5f6-7890-1234-567890abcdef\",\n   15           \"name\": \"Admin\",\n   16           \"description\": \"Administrator role\",\n   17           \"level\": \"global\"\n   18         }\n   19       ]\n   20     }\n   21   }\n   22 }\n\n\n  Error States\n\n  The endpoint utilizes a GlobalExceptionFilter (src/common/filters/global-exception.filter.ts) to standardize error responses.\n\n  Return Type for Errors: ErrorResponse\n\n\n\n   1 interface ErrorResponse {\n   2   code: number;    // HTTP status code.\n   3   error: string;   // A short, descriptive error message.\n   4   message: string; // A more detailed message, often user-friendly.\n   5 }\n\n\n  1. `401 Unauthorized` - Invalid Credentials\n\n\n   * Description: Occurs when the provided email does not correspond to a registered user, or the password does not match the user's record.\n   * Triggered by:\n       * if (!profile || !profile.auth): Email not found.\n       * if (!authWithPassword || !authWithPassword.password): User's authentication data is incomplete.\n       * if (!isMatch): Incorrect password.\n   * Example Error Response:\n\n\n\n   1     {\n   2       \"code\": 401,\n   3       \"error\": \"Unauthorized\",\n   4       \"message\": \"Invalid credentials\"\n   5     }\n\n\n\n\n   1     {\n   2       \"code\": 401,\n   3       \"error\": \"Unauthorized\",\n   4       \"message\": \"Incorrect password\"\n   5     }\n\n\n  2. `400 Bad Request` - Validation Errors\n\n\n   * Description: Occurs when the SignInDto fails validation checks (e.g., email is not a valid email format, password is too short or missing).\n   * Triggered by: class-validator decorators on SignInDto properties.\n   * Example Error Response:\n\n\n\n   1     {\n   2       \"code\": 400,\n   3       \"error\": \"Bad Request\",\n   4       \"message\": \"Validation failed (email is invalid)\"\n   5     }\n\n\n\n\n   1     {\n   2       \"code\": 400,\n   3       \"error\": \"Bad Request\",\n   4       \"message\": \"Validation failed (password must be longer than or equal to 6 characters)\"\n   5     }\n  3. `500 Internal Server Error` - Unexpected Errors\n   * Description: Occurs for any unhandled exceptions or unexpected server-side issues.\n   * Triggered by: Any unforeseen errors during the sign-in process not explicitly caught by HttpException or other specific error handling.\n   * Example Error Response:\n   1     {\n   2       \"code\": 500,\n   3       \"error\": \"Internal server error\",\n   4       \"message\": \"An unexpected error occurred\"\n   5     }, the request will fail with a status of 400, with a body structure of { \"code\": 400, \"error\": \"Bad Request\", \"message\": \"Validation failed (password must be longer than or equal to 6 characters)\"}"
+    }
+  ]
+}
+
+{
+  "messages": [
+    {
+      "role": "system", 
+      "content":"You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client."
+    },
+    {
+      "role": "user",
+      "message": "What is the documentation for getting a users profile?"
+    },
+    {
+      "role": "assistant",
+      "message": "GET /auth/profile\n\n  This endpoint retrieves the authenticated user's profile information, specifically tailored for display purposes.\n\n  Request Parameters/Body (DTO)\n  This endpoint does not require any request body or query parameters. The user's identity is extracted from the authentication token provided in the request headers (typically via\n  req['user'] after JWT verification).\n  Successful Response (Status: 200 OK)\n  Return Type: SuccessResponse<ProfileForDisplay>\n  The getProfileForDisplay method in UserService explicitly selects certain fields from the Profile and Branch entities.\n    1 interface SuccessResponse<T> {\n    2   message: string;\n    3   data?: T;\n    4 }\n    5 \n    6 interface ProfileForDisplay {\n    7   id: string;\n    8   firstName: string;\n    9   middleName: string;\n   10   lastName: string;\n   11   email: string;\n   12   gender: 'male' | 'female';\n   13   profile: string;\n   14   branchID: number;\n   15   dateHired: string;\n   16   address: string | null;\n   17   mobileNumber: string | null;\n   18   branch: {\n   19     name: string;\n   20     isHeadOffice: boolean;\n   21     countryName: string;\n   22     countryCode: string;\n   23     address: string;\n   24     phone: string;\n   25     email: string;\n   26   };\n   27 }\n\n  Example Successful Response:\n\n    1 {\n    2   \"message\": \"Profile retrieved\",\n    3   \"data\": {\n    4     \"id\": \"12345678901234\",\n    5     \"firstName\": \"John\",\n    6     \"middleName\": \"A.\",\n    7     \"lastName\": \"Doe\",\n    8     \"email\": \"john.doe@example.com\",\n    9     \"gender\": \"male\",\n   10     \"profile\": \"default\",\n   11     \"branchID\": 1,\n   12     \"dateHired\": \"2023-01-01\",\n   13     \"address\": \"123 Main St\",\n   14     \"mobileNumber\": \"+1234567890\",\n   15     \"branch\": {\n   16       \"name\": \"Head Office\",\n   17       \"isHeadOffice\": true,\n   18       \"countryName\": \"Exampleland\",\n   19       \"countryCode\": \"EL\",\n   20       \"address\": \"123 Main Street, Capital City\",\n   21       \"phone\": \"+1234567890\",\n   22       \"email\": \"headoffice@example.com\"\n   23     }\n   24   }\n   25 }\n\n  Error States\n  The endpoint utilizes a GlobalExceptionFilter (src/common/filters/global-exception.filter.ts) to standardize error responses.\n  Return Type for Errors: ErrorResponse\n   1 interface ErrorResponse {\n   2   code: number;    // HTTP status code.\n   3   error: string;   // A short, descriptive error message.\n   4   message: string; // A more detailed message, often user-friendly.\n   5 }\n\n\n\n  1. `401 Unauthorized` - User Not Authenticated\n   * Description: Occurs if the request does not contain a valid authentication token, or the token is expired/malformed. This is typically handled by a global authentication guard before\n     reaching the controller.\n   * Triggered by: Lack of valid JWT in the Authorization header.\n   * Example Error Response:\n   1     {\n   2       \"code\": 401,\n   3       \"error\": \"Unauthorized\",\n   4       \"message\": \"Unauthorized\"\n   5     }\n  2. `404 Not Found` - Profile Not Found\n   * Description: Occurs if a profile associated with the authenticated user ID cannot be found in the database.\n   * Triggered by: if (!profile) in UserService.getProfileForDisplay.\n   * Example Error Response:\n   1     {\n   2       \"code\": 404,\n   3       \"error\": \"Not Found\",\n   4       \"message\": \"Profile not found\"\n   5     }\n  3. `500 Internal Server Error` - Unexpected Errors\n   * Description: Occurs for any unhandled exceptions or unexpected server-side issues during the profile retrieval process.\n   * Triggered by: Any unforeseen errors not explicitly caught by HttpException or other specific error handling.\n   * Example Error Response:\n   1     {\n   2       \"code\": 500,\n   3       \"error\": \"Internal server error\",\n   4       \"message\": \"An unexpected error occurred\"\n   5     }"
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system", 
+      "content":"You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client."
+    },
+    {
+      "role": "user",
+      "message": "Can users profile be gotten with the endpoint of /auth/profile if he is not authenticated?"
+    },
+    {
+      "role": "assistant",
+      "message": "Base on the API endpoint GET /auth/profile\n\n  This endpoint retrieves the authenticated user's profile information, specifically tailored for display purposes.\n\n  Request Parameters/Body (DTO)\n  This endpoint does not require any request body or query parameters. The user's identity is extracted from the authentication token provided in the request headers (typically via\n  req['user'] after JWT verification).\n  Successful Response (Status: 200 OK)\n  Return Type: SuccessResponse<ProfileForDisplay>\n  The getProfileForDisplay method in UserService explicitly selects certain fields from the Profile and Branch entities.\n    1 interface SuccessResponse<T> {\n    2   message: string;\n    3   data?: T;\n    4 }\n    5 \n    6 interface ProfileForDisplay {\n    7   id: string;\n    8   firstName: string;\n    9   middleName: string;\n   10   lastName: string;\n   11   email: string;\n   12   gender: 'male' | 'female';\n   13   profile: string;\n   14   branchID: number;\n   15   dateHired: string;\n   16   address: string | null;\n   17   mobileNumber: string | null;\n   18   branch: {\n   19     name: string;\n   20     isHeadOffice: boolean;\n   21     countryName: string;\n   22     countryCode: string;\n   23     address: string;\n   24     phone: string;\n   25     email: string;\n   26   };\n   27 }\n\n  Example Successful Response:\n\n    1 {\n    2   \"message\": \"Profile retrieved\",\n    3   \"data\": {\n    4     \"id\": \"12345678901234\",\n    5     \"firstName\": \"John\",\n    6     \"middleName\": \"A.\",\n    7     \"lastName\": \"Doe\",\n    8     \"email\": \"john.doe@example.com\",\n    9     \"gender\": \"male\",\n   10     \"profile\": \"default\",\n   11     \"branchID\": 1,\n   12     \"dateHired\": \"2023-01-01\",\n   13     \"address\": \"123 Main St\",\n   14     \"mobileNumber\": \"+1234567890\",\n   15     \"branch\": {\n   16       \"name\": \"Head Office\",\n   17       \"isHeadOffice\": true,\n   18       \"countryName\": \"Exampleland\",\n   19       \"countryCode\": \"EL\",\n   20       \"address\": \"123 Main Street, Capital City\",\n   21       \"phone\": \"+1234567890\",\n   22       \"email\": \"headoffice@example.com\"\n   23     }\n   24   }\n   25 }\n\n  Error States\n  The endpoint utilizes a GlobalExceptionFilter (src/common/filters/global-exception.filter.ts) to standardize error responses.\n  Return Type for Errors: ErrorResponse\n   1 interface ErrorResponse {\n   2   code: number;    // HTTP status code.\n   3   error: string;   // A short, descriptive error message.\n   4   message: string; // A more detailed message, often user-friendly.\n   5 }\n\n\n\n  1. `401 Unauthorized` - User Not Authenticated\n   * Description: Occurs if the request does not contain a valid authentication token, or the token is expired/malformed. This is typically handled by a global authentication guard before\n     reaching the controller.\n   * Triggered by: Lack of valid JWT in the Authorization header.\n   * Example Error Response:\n   1     {\n   2       \"code\": 401,\n   3       \"error\": \"Unauthorized\",\n   4       \"message\": \"Unauthorized\"\n   5     }\n  2. `404 Not Found` - Profile Not Found\n   * Description: Occurs if a profile associated with the authenticated user ID cannot be found in the database.\n   * Triggered by: if (!profile) in UserService.getProfileForDisplay.\n   * Example Error Response:\n   1     {\n   2       \"code\": 404,\n   3       \"error\": \"Not Found\",\n   4       \"message\": \"Profile not found\"\n   5     }\n  3. `500 Internal Server Error` - Unexpected Errors\n   * Description: Occurs for any unhandled exceptions or unexpected server-side issues during the profile retrieval process.\n   * Triggered by: Any unforeseen errors not explicitly caught by HttpException or other specific error handling.\n   * Example Error Response:\n   1     {\n   2       \"code\": 500,\n   3       \"error\": \"Internal server error\",\n   4       \"message\": \"An unexpected error occurred\"\n   5     }, users who are not authenticated can not get their profile. The endpoint will return a result {\"code\": 401,\"error\": \"Unauthorized\",\"message\": \"Unauthorized\"}."
+    }
+  ]
+}
+
+{
+  "messages": [
+    {
+      "role": "system", 
+      "content":"You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client."
+    },
+    {
+      "role": "user",
+      "message": "Can users profile be gotten with the endpoint of /auth/profile if he is not authenticated?"
+    },
+    {
+      "role": "assistant",
+      "message": "Base on the API endpoint GET /auth/profile\n\n  This endpoint retrieves the authenticated user's profile information, specifically tailored for display purposes.\n\n  Request Parameters/Body (DTO)\n  This endpoint does not require any request body or query parameters. The user's identity is extracted from the authentication token provided in the request headers (typically via\n  req['user'] after JWT verification).\n  Successful Response (Status: 200 OK)\n  Return Type: SuccessResponse<ProfileForDisplay>\n  The getProfileForDisplay method in UserService explicitly selects certain fields from the Profile and Branch entities.\n    1 interface SuccessResponse<T> {\n    2   message: string;\n    3   data?: T;\n    4 }\n    5 \n    6 interface ProfileForDisplay {\n    7   id: string;\n    8   firstName: string;\n    9   middleName: string;\n   10   lastName: string;\n   11   email: string;\n   12   gender: 'male' | 'female';\n   13   profile: string;\n   14   branchID: number;\n   15   dateHired: string;\n   16   address: string | null;\n   17   mobileNumber: string | null;\n   18   branch: {\n   19     name: string;\n   20     isHeadOffice: boolean;\n   21     countryName: string;\n   22     countryCode: string;\n   23     address: string;\n   24     phone: string;\n   25     email: string;\n   26   };\n   27 }\n\n  Example Successful Response:\n\n    1 {\n    2   \"message\": \"Profile retrieved\",\n    3   \"data\": {\n    4     \"id\": \"12345678901234\",\n    5     \"firstName\": \"John\",\n    6     \"middleName\": \"A.\",\n    7     \"lastName\": \"Doe\",\n    8     \"email\": \"john.doe@example.com\",\n    9     \"gender\": \"male\",\n   10     \"profile\": \"default\",\n   11     \"branchID\": 1,\n   12     \"dateHired\": \"2023-01-01\",\n   13     \"address\": \"123 Main St\",\n   14     \"mobileNumber\": \"+1234567890\",\n   15     \"branch\": {\n   16       \"name\": \"Head Office\",\n   17       \"isHeadOffice\": true,\n   18       \"countryName\": \"Exampleland\",\n   19       \"countryCode\": \"EL\",\n   20       \"address\": \"123 Main Street, Capital City\",\n   21       \"phone\": \"+1234567890\",\n   22       \"email\": \"headoffice@example.com\"\n   23     }\n   24   }\n   25 }\n\n  Error States\n  The endpoint utilizes a GlobalExceptionFilter (src/common/filters/global-exception.filter.ts) to standardize error responses.\n  Return Type for Errors: ErrorResponse\n   1 interface ErrorResponse {\n   2   code: number;    // HTTP status code.\n   3   error: string;   // A short, descriptive error message.\n   4   message: string; // A more detailed message, often user-friendly.\n   5 }\n\n\n\n  1. `401 Unauthorized` - User Not Authenticated\n   * Description: Occurs if the request does not contain a valid authentication token, or the token is expired/malformed. This is typically handled by a global authentication guard before\n     reaching the controller.\n   * Triggered by: Lack of valid JWT in the Authorization header.\n   * Example Error Response:\n   1     {\n   2       \"code\": 401,\n   3       \"error\": \"Unauthorized\",\n   4       \"message\": \"Unauthorized\"\n   5     }\n  2. `404 Not Found` - Profile Not Found\n   * Description: Occurs if a profile associated with the authenticated user ID cannot be found in the database.\n   * Triggered by: if (!profile) in UserService.getProfileForDisplay.\n   * Example Error Response:\n   1     {\n   2       \"code\": 404,\n   3       \"error\": \"Not Found\",\n   4       \"message\": \"Profile not found\"\n   5     }\n  3. `500 Internal Server Error` - Unexpected Errors\n   * Description: Occurs for any unhandled exceptions or unexpected server-side issues during the profile retrieval process.\n   * Triggered by: Any unforeseen errors not explicitly caught by HttpException or other specific error handling.\n   * Example Error Response:\n   1     {\n   2       \"code\": 500,\n   3       \"error\": \"Internal server error\",\n   4       \"message\": \"An unexpected error occurred\"\n   5     }, users who are not authenticated can not get there profile in anyway."
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client."
+    },
+    {
+      "role": "user",
+      "message": "What is the documentation for updating a users profile?"
+    },
+    {
+      "role": "assistant",
+      "message": "Based on the niyaku API documentation, the endpoint for updating a user's profile is:\n\nPUT /auth/profile\n\nThis endpoint allows an authenticated user to update their profile information.\n\nRequest Body (DTO)\n`ChangeProfileDto` (src/user/dto/profile.dto.ts)\n\n  1 import { IsOptional, IsString } from 'class-validator';\n  2 \n  3 export class ChangeProfileDto {\n  4   @IsString()\n  5   @IsOptional()\n  6   firstName?: string;\n  7 \n  8   @IsString()\n  9   @IsOptional()\n 10   lastName?: string;\n 11 \n 12   @IsString()\n 13   @IsOptional()\n 14   middleName?: string;\n 15 }\n\nAll fields are optional, but if provided must be strings.\n\nSuccessful Response (Status: 200 OK)\nThe endpoint returns a SuccessResponse containing the updated Profile entity.\n\nError handling is standardized via the GlobalExceptionFilter."
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client."
+    },
+    {
+      "role": "user",
+      "message": "What happens if a user updates only their first name?"
+    },
+    {
+      "role": "assistant",
+      "message": "Based on the ChangeProfileDto used by the PUT /auth/profile endpoint, all fields are optional.\n\nIf a user provides only the firstName field, the system will update only that field while keeping the other profile fields unchanged.\n\nThe updateProfile method in UserService persists the changes and returns the full Profile object reflecting the updated firstName along with the existing values of other fields.\n\nThe request will succeed with a 200 OK response as long as the provided value is a valid string and the user is authenticated."
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client."
+    },
+    {
+      "role": "user",
+      "message": "What happens if a user sends a number instead of a string when updating their first name?"
+    },
+    {
+      "role": "assistant",
+      "message": "According to the ChangeProfileDto used by the PUT /auth/profile endpoint, the firstName field is decorated with @IsString().\n\nIf a number or any non-string value is provided, the request will fail validation before reaching the service layer.\n\nThe GlobalExceptionFilter will return a 400 Bad Request response with a body similar to:\n\n{ \"code\": 400, \"error\": \"Bad Request\", \"message\": \"Validation failed (firstName must be a string)\" }"
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client."
+    },
+    {
+      "role": "user",
+      "message": "Can a user update their profile without being authenticated?"
+    },
+    {
+      "role": "assistant",
+      "message": "Based on the PUT /auth/profile endpoint behavior, authentication is required.\n\nThe user's identity is derived from the JWT token provided in the Authorization header. If no valid token is present, the request will not reach the controller.\n\nThe system will respond with a 401 Unauthorized error in the format:\n\n{ \"code\": 401, \"error\": \"Unauthorized\", \"message\": \"Unauthorized\" }"
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client."
+    },
+    {
+      "role": "user",
+      "message": "What happens if an authenticated user tries to update a profile that does not exist?"
+    },
+    {
+      "role": "assistant",
+      "message": "From the implementation of the updateProfile method in UserService, the system first attempts to retrieve the profile associated with the authenticated user.\n\nIf no profile is found, the service throws a NotFoundException.\n\nThis results in a 404 Not Found response with the following structure:\n\n{ \"code\": 404, \"error\": \"Not Found\", \"message\": \"Profile not found\" }"
+    }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "What does the GET /auth/roles endpoint do?" },
+    { "role": "assistant", "message": "The GET /auth/roles endpoint retrieves a paginated list of user roles available in the system. Each role includes its permissions and metadata such as name, description, and level." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "What is BasePaginationDto used for in the roles endpoint?" },
+    { "role": "assistant", "message": "BasePaginationDto is used to validate and transform pagination query parameters for the GET /auth/roles endpoint. It defines optional page and pageSize values, enforces numeric validation, applies minimum values, and sets default pagination behavior." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "What happens if page and pageSize are not provided when fetching roles?" },
+    { "role": "assistant", "message": "If page and pageSize are not provided, BasePaginationDto applies default values. The page defaults to 1 and pageSize defaults to 25, returning the first page of roles with up to 25 items." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "What pagination information is included in the roles response?" },
+    { "role": "assistant", "message": "The response includes the total count of roles, the current page number, the pageSize used, and a data array containing the roles for that page." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "What fields are included in a role returned by the roles API?" },
+    { "role": "assistant", "message": "Each role includes an id, name, description, level, and a permissions array. Each permission entry references a permission object containing its id, name, and description." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "Is authentication required to retrieve roles?" },
+    { "role": "assistant", "message": "Yes. The GET /auth/roles endpoint requires authentication. If the user is not authenticated, the API returns a 401 Unauthorized response." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "What validation rules apply to pagination parameters when retrieving roles?" },
+    { "role": "assistant", "message": "Both page and pageSize must be numbers with a minimum value of 1. These constraints are enforced by BasePaginationDto using class-validator decorators." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "What errors can occur when calling the roles endpoint?" },
+    { "role": "assistant", "message": "If the user is not authenticated, the API returns a 401 Unauthorized error. If an unexpected server error occurs, the API returns a 500 Internal Server Error." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "Is BasePaginationDto returned in the roles API response?" },
+    { "role": "assistant", "message": "No. BasePaginationDto is only used to validate and process incoming query parameters. The response returns pagination values as part of the paginated result object, not the DTO itself." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "What does the GET /employees endpoint do?" },
+    { "role": "assistant", "message": "The GET /employees endpoint retrieves a paginated list of employees in the system. It supports pagination and optional filtering by branch ID and requires the employee.view permission." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "What is PaginationQueryWithBranchDto used for?" },
+    { "role": "assistant", "message": "PaginationQueryWithBranchDto is used to validate and transform query parameters for listing employees. It extends BasePaginationDto to include page and pageSize, and adds an optional branchId field to filter employees by branch." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "How does branchId affect the employees list?" },
+    { "role": "assistant", "message": "When branchId is provided in the query parameters, the GET /employees endpoint returns only employees that belong to the specified branch. If it is omitted, employees from all branches are returned." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "What permissions are required to view employees?" },
+    { "role": "assistant", "message": "The GET /employees endpoint requires the employee.view permission. If the user lacks this permission, the API returns a 403 Forbidden response." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "What information is returned when fetching a single employee?" },
+    { "role": "assistant", "message": "The GET /employees/:id endpoint returns detailed employee information including profile fields and associated authentication data such as assigned roles." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "What happens if an employee ID does not exist?" },
+    { "role": "assistant", "message": "If no employee is found with the specified ID, the GET /employees/:id endpoint returns a 404 Not Found response with the message 'Employee not found'." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "What does the POST /employees endpoint do?" },
+    { "role": "assistant", "message": "The POST /employees endpoint creates a new employee in the system. It requires employee.add and employee.manage permissions and accepts employee details such as ID, personal information, branch, and assigned roles." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "Why would creating an employee fail with a 400 error?" },
+    { "role": "assistant", "message": "A 400 Bad Request can occur if the request body fails validation, such as when the employee ID is not exactly 14 characters long or when a user with the same ID or email already exists." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "Does the DELETE /employees endpoint remove an employee?" },
+    { "role": "assistant", "message": "No. The DELETE /employees/:id endpoint is not yet implemented. It currently returns a success response with the message 'Not implemented' and no data." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "What does the GET /branch endpoint return?" },
+    { "role": "assistant", "message": "The GET /branch endpoint retrieves a paginated list of branches in the system. Each branch includes details such as name, location, contact information, and whether it is the head office." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "What permissions are required to view branches?" },
+    { "role": "assistant", "message": "Viewing branches requires either the branch.view or branch.manage permission. If the user lacks these permissions, a 403 Forbidden response is returned." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "What happens when a new branch is created?" },
+    { "role": "assistant", "message": "When a new branch is successfully created, the POST /branch endpoint returns a 201 Created response containing the newly created branch object, including its ID and contact details." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "Why would creating a branch return a validation error?" },
+    { "role": "assistant", "message": "A validation error occurs if required fields such as name, countryCode, or address are missing or invalid. In such cases, the API returns a 400 Bad Request response with validation error messages." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "What is the difference between 401 and 403 errors for branch endpoints?" },
+    { "role": "assistant", "message": "A 401 Unauthorized error occurs when the user is not authenticated. A 403 Forbidden error occurs when the user is authenticated but does not have the required branch permissions." }
+  ]
+}
+{
+  "messages": [
+    { "role": "system", "content": "You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client. Answer strictly from the api documentation" },
+    { "role": "user", "message": "Is BasePaginationDto returned in branch or employee responses?" },
+    { "role": "assistant", "message": "No. BasePaginationDto is only used for validating incoming query parameters. The API responses return pagination values as part of the paginated result object, not the DTO itself." }
+  ]
+}
+
+{
+  "messages": [
+    {
+      "role": "system", 
+      "content":"You are a system expert of niyaku application. You role is to analyse the logs of the application and categorise whether the log needs tool invocation to update client."
+    },
+    {
+      "role": "user",
+      "message": "What is the client database Architecture"
+    },
+    {
+      "role": "assistant",
+      "message": "There are multiple entities in the client schema for handling different aspects of the user database.
+        
+          # Client and Credit Assessment Schema
+
+          This document outlines the database schema for the client and credit assessment modules.
+
+          ## Client Module
+
+          ### 1. `Client` Entity (Table: `client`)
+
+          This is an abstract base entity for `IndividualClient` and `BusinessClient`.
+
+          -   `id`: Primary Key, uuid
+          -   `type`: enum (`individual`, `business`)
+          -   `branchID`: int (Foreign Key to `Branch.id`)
+          -   `createdAt`: timestamp
+          -   `updatedAt`: timestamp
+          -   **Relationships**:
+              -   Many-to-one with `Branch`.
+              -   One-to-many with `ClientAddress`.
+              -   One-to-many with `ClientContact`.
+              -   One-to-many with `ClientDocument`.
+              -   One-to-many with `ClientFinancial`.
+              -   One-to-many with `EmploymentHistory`.
+              -   One-to-many with `CompanyEarnings`.
+              -   One-to-many with `AssessmentReport`.
+
+          ### 2. `IndividualClient` Entity (Table: `client`, type: `individual`)
+
+          -   Inherits from `Client`.
+          -   `firstName`: varchar(100)
+          -   `lastName`: varchar(100)
+          -   `middleName`: varchar(100), nullable
+          -   `nin`: varchar(50), unique, nullable
+
+          ### 3. `BusinessClient` Entity (Table: `client`, type: `business`)
+
+          -   Inherits from `Client`.
+          -   `businessName`: varchar(200)
+          -   `registrationNumber`: varchar(50), unique, nullable
+          -   `businessType`: varchar(50), nullable
+          -   **Relationships**:
+              -   One-to-many with `BusinessRepresentative`.
+
+          ### 4. `BusinessRepresentative` Entity (Table: `business_representative`)
+
+          -   `id`: Primary Key, uuid
+          -   `name`: varchar(100)
+          -   `role`: varchar(100)
+          -   `nin`: varchar(50), nullable
+          -   `clientId`: string (Foreign Key to `BusinessClient.id`)
+          -   `createdAt`: timestamp
+          -   `updatedAt`: timestamp
+          -   **Relationships**:
+              -   Many-to-one with `BusinessClient`.
+
+          ### 5. `ClientAddress` Entity (Table: `client_address`)
+
+          -   `id`: Primary Key, auto-incrementing
+          -   `clientID`: uuid (Foreign Key to `Client.id`)
+          -   `district`: varchar(100)
+          -   `address`: text
+          -   `county`: varchar(100), nullable
+          -   `subcounty`: varchar(100), nullable
+          -   `parish`: varchar(100), nullable
+          -   `city`: varchar(100)
+          -   `createdAt`: timestamp
+          -   `updatedAt`: timestamp
+          -   **Relationships**:
+              -   Many-to-one with `Client`.
+
+          ### 6. `ClientContact` Entity (Table: `client_contact`)
+
+          -   `id`: Primary Key, auto-incrementing
+          -   `clientID`: uuid (Foreign Key to `Client.id`)
+          -   `contactType`: enum (`email`, `mobile`, `home`, `work`)
+          -   `contact`: varchar(200)
+          -   `createdAt`: timestamp
+          -   `updatedAt`: timestamp
+          -   **Relationships**:
+              -   Many-to-one with `Client`.
+
+          ### 7. `ClientDocument` Entity (Table: `client_document`)
+
+          -   `id`: Primary Key, auto-incrementing
+          -   `clientID`: uuid (Foreign Key to `Client.id`)
+          -   `documentType`: enum (`national-id`, `pay-slip`, `employment-letter`, `other`)
+          -   `documentId`: uuid (Foreign Key to `Document.id`)
+          -   `uploadedBy`: varchar(14) (Foreign Key to `Profile.id`), nullable
+          -   `createdAt`: timestamp
+          -   `updatedAt`: timestamp
+          -   **Relationships**:
+              -   Many-to-one with `Client`.
+              -   Many-to-one with `Document`.
+
+          ### 8. `ClientFinancial` Entity (Table: `client_financial`)
+
+          -   `id`: Primary Key, auto-incrementing
+          -   `clientID`: uuid (Foreign Key to `Client.id`)
+          -   `createdAt`: timestamp
+          -   `updatedAt`: timestamp
+          -   **Relationships**:
+              -   Many-to-one with `Client`.
+
+          ### 9. `ClientRiskProfile` Entity (Table: `client_risk_profile`)
+
+          -   `clientID`: Primary Key, string (Foreign Key to `Client.id`)
+          -   `category`: enum (`low`, `medium`, `high`)
+
+          ## Credit Assessment Module
+
+          ### 1. `AssessmentReport` Entity (Table: `assessment_report`)
+
+          -   `id`: Primary Key, uuid
+          -   `clientID`: uuid (Foreign Key to `Client.id`)
+          -   `branchID`: int (Foreign Key to `Branch.id`)
+          -   `riskRating`: varchar(20)
+          -   `recommendedLimit`: decimal(15, 2)
+          -   `status`: enum (`Approved`, `Pending Review`, `Rejected`), default: `Pending Review`
+          -   `crbScore`: int, nullable
+          -   `liabilities`: jsonb, nullable
+          -   `findings`: text, nullable
+          -   `isManualOverride`: boolean, default: false
+          -   `officerID`: varchar(14) (Foreign Key to `Profile.id`), nullable
+          -   `createdAt`: timestamp
+          -   `updatedAt`: timestamp
+          -   **Relationships**:
+              -   Many-to-one with `Client`.
+              -   Many-to-one with `Branch`.
+              -   Many-to-one with `Profile`.
+
+          ### 2. `CompanyEarnings` Entity (Table: `company_earnings`)
+
+          -   `id`: Primary Key, uuid
+          -   `clientID`: uuid (Foreign Key to `Client.id`)
+          -   `monthlyEarning`: decimal(15, 2)
+          -   `financialYear`: int
+          -   `isAudited`: boolean, default: false
+          -   `createdAt`: timestamp
+          -   `updatedAt`: timestamp
+          -   **Relationships**:
+              -   Many-to-one with `Client`.
+
+          ### 3. `EmploymentHistory` Entity (Table: `employment_history`)
+
+          -   `id`: Primary Key, auto-incrementing
+          -   `clientID`: uuid (Foreign Key to `Client.id`)
+          -   `branchID`: int (Foreign Key to `Branch.id`)
+          -   `employerName`: varchar(255)
+          -   `industry`: varchar(100)
+          -   `position`: varchar(100)
+          -   `contractType`: enum (`permanent`, `contract`, `casual`, `other`), default: `permanent`
+          -   `contractDuration`: varchar(50), nullable
+          -   `startDate`: date
+          -   `endDate`: date, nullable
+          -   `status`: enum (`current`, `past`), default: `current`
+          -   `isVerified`: boolean, default: false
+          -   `createdAt`: timestamp
+          -   `updatedAt`: timestamp
+          -   **Relationships**:
+              -   Many-to-one with `Client`.
+              -   Many-to-one with `Branch`.
+              -   One-to-many with `SalaryHistory`.
+
+          ### 4. `SalaryHistory` Entity (Table: `salary_history`)
+
+          -   `id`: Primary Key, auto-incrementing
+          -   `employmentHistoryID`: int (Foreign Key to `EmploymentHistory.id`)
+          -   `baseSalary`: decimal(12, 2)
+          -   `allowances`: decimal(12, 2), default: 0
+          -   `deductions`: decimal(12, 2), default: 0
+          -   `year`: varchar(40)
+          -   `isVerified`: boolean, default: false
+          -   `isCurrent`: boolean, default: true
+          -   `createdAt`: timestamp
+          -   `updatedAt`: timestamp
+          -   **Relationships**:
+              -   Many-to-one with `EmploymentHistory`.         
+      "
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a subject matter expert of the Niyaku Credit Assessment module. Answer strictly using the official API documentation."
+    },
+    {
+      "role": "user",
+      "message": "What endpoint is used to add a client's employment history?"
+    },
+    {
+      "role": "assistant",
+      "message": "The endpoint is POST /credit-assessment/employment-history. It requires the assessment.manage permission."
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a subject matter expert of the Niyaku Credit Assessment module. Answer strictly using the official API documentation."
+    },
+    {
+      "role": "user",
+      "message": "Is branchID required when creating an employment history record?"
+    },
+    {
+      "role": "assistant",
+      "message": "No. branchID is optional when creating an employment history record."
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a subject matter expert of the Niyaku Credit Assessment module. Answer strictly using the official API documentation."
+    },
+    {
+      "role": "user",
+      "message": "What validation rules apply to the salaries field in CreateEmploymentHistoryDto?"
+    },
+    {
+      "role": "assistant",
+      "message": "The salaries field is required and must not be empty. Each item must follow CreateSalaryDetailsDto rules."
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a subject matter expert of the Niyaku Credit Assessment module. Answer strictly using the official API documentation."
+    },
+    {
+      "role": "user",
+      "message": "Can salary history be added without an employment history?"
+    },
+    {
+      "role": "assistant",
+      "message": "No. Salary history requires an existing employment history ID. If it does not exist, the API returns 404 Not Found."
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a subject matter expert of the Niyaku Credit Assessment module. Answer strictly using the official API documentation."
+    },
+    {
+      "role": "user",
+      "message": "How is average income calculated for an individual client during assessment?"
+    },
+    {
+      "role": "assistant",
+      "message": "It is calculated using the last 6 months of salary: base salary plus allowances minus deductions."
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a subject matter expert of the Niyaku Credit Assessment module. Answer strictly using the official API documentation."
+    },
+    {
+      "role": "user",
+      "message": "How is average income calculated for a business client?"
+    },
+    {
+      "role": "assistant",
+      "message": "It is calculated as the average of the last 3 years of monthly company earnings."
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a subject matter expert of the Niyaku Credit Assessment module. Answer strictly using the official API documentation."
+    },
+    {
+      "role": "user",
+      "message": "What score results in a High Risk credit assessment?"
+    },
+    {
+      "role": "assistant",
+      "message": "A score below 50 results in a High Risk rating with a Rejected status and a recommended limit of 0."
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a subject matter expert of the Niyaku Credit Assessment module. Answer strictly using the official API documentation."
+    },
+    {
+      "role": "user",
+      "message": "Does the system currently use a real CRB score?"
+    },
+    {
+      "role": "assistant",
+      "message": "No. The CRB score is currently hardcoded to 500."
+    }
+  ]
+}
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a subject matter expert of the Niyaku Credit Assessment module. Answer strictly using the official API documentation."
+    },
+    {
+      "role": "user",
+      "message": "Which permission is required to view assessment history?"
+    },
+    {
+      "role": "assistant",
+      "message": "The assessment.read permission is required to view assessment history."
+    }
+  ]
+}
+
