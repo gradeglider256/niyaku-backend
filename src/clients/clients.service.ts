@@ -24,6 +24,9 @@ import { CreateContactDto } from './dto/create-contact.dto';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { DocumentsService } from '../documents/documents.service';
 import { PaginationQueryWithBranchDto } from 'src/common/dtos/pagination.dtos';
+import { EmploymentHistory } from '../credit_assessment/entities/employment.entity';
+import { SalaryHistory } from '../credit_assessment/entities/salary.entity';
+import { CompanyEarnings } from '../credit_assessment/entities/company-earnings.entity';
 
 @Injectable()
 export class ClientsService {
@@ -42,7 +45,7 @@ export class ClientsService {
     private branchRepository: Repository<Branch>,
     private dataSource: DataSource,
     private documentsService: DocumentsService,
-  ) { }
+  ) {}
 
   async createClient(createClientDto: CreateClientDto, branchID: number) {
     // Check if client already exists
@@ -164,6 +167,70 @@ export class ClientsService {
         }
       }
 
+      // Create Employment History with Salary History for Individual clients
+      if (
+        createClientDto.type === ClientType.INDIVIDUAL &&
+        createClientDto.employmentHistory
+      ) {
+        const employmentDto = createClientDto.employmentHistory;
+
+        // Create Employment History
+        const employment = queryRunner.manager.create(EmploymentHistory, {
+          clientID: client.id,
+          employerName: employmentDto.employerName,
+          industry: employmentDto.industry,
+          position: employmentDto.position,
+          contractType: employmentDto.contractType,
+          contractDuration: employmentDto.contractDuration,
+          startDate: employmentDto.startDate,
+          endDate: employmentDto.endDate,
+          status: employmentDto.status,
+          branchID: branchID,
+        });
+
+        const savedEmployment = await queryRunner.manager.save(
+          EmploymentHistory,
+          employment,
+        );
+
+        // Create Salary History records
+        if (employmentDto.salaries && employmentDto.salaries.length > 0) {
+          const salaryRecords = employmentDto.salaries.map((salaryDto) => {
+            return queryRunner.manager.create(SalaryHistory, {
+              baseSalary: salaryDto.baseSalary,
+              allowances: salaryDto.allowances || 0,
+              deductions: salaryDto.deductions || 0,
+              year: salaryDto.year,
+              employmentHistoryID: savedEmployment.id,
+              isVerified: false,
+              isCurrent: true,
+            });
+          });
+
+          await queryRunner.manager.save(SalaryHistory, salaryRecords);
+        }
+      }
+
+      // Create Company Earnings for Business clients
+      if (
+        createClientDto.type === ClientType.BUSINESS &&
+        createClientDto.companyEarnings &&
+        createClientDto.companyEarnings.length > 0
+      ) {
+        const earningsRecords = createClientDto.companyEarnings.map(
+          (earningsDto) => {
+            return queryRunner.manager.create(CompanyEarnings, {
+              clientID: client.id,
+              monthlyEarning: earningsDto.monthlyEarning,
+              financialYear: earningsDto.financialYear,
+              isAudited: earningsDto.isAudited || false,
+            });
+          },
+        );
+
+        await queryRunner.manager.save(CompanyEarnings, earningsRecords);
+      }
+
       await queryRunner.commitTransaction();
 
       return this.getClientById(client.id);
@@ -190,6 +257,9 @@ export class ClientsService {
       'documents',
       'branch',
       'assessmentReports',
+      'financials',
+      'employmentHistory',
+      'companyEarnings',
     ];
 
     if (client.type === ClientType.BUSINESS) {
