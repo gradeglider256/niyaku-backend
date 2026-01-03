@@ -257,6 +257,9 @@ export class ClientsService {
       'documents',
       'branch',
       'assessmentReports',
+      'financials',
+      'employmentHistory',
+      'companyEarnings',
     ];
 
     if (client.type === ClientType.BUSINESS) {
