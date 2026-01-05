@@ -282,7 +282,7 @@ export class CreateClientDto {
   @ValidateNested()
   @Type(() => CreateEmploymentHistoryDto)
   @IsOptional()
-  employmentHistory?: CreateEmploymentHistoryDto;
+  employmentHistory?: CreateEmploymentHistoryDto[];
 
   // Company earnings for Business clients
   @ApiPropertyOptional({
