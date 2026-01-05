@@ -172,42 +172,61 @@ export class ClientsService {
         createClientDto.type === ClientType.INDIVIDUAL &&
         createClientDto.employmentHistory
       ) {
-        const employmentDto = createClientDto.employmentHistory;
+        const employmentDtos = createClientDto.employmentHistory;
 
-        // Create Employment History
-        const employment = queryRunner.manager.create(EmploymentHistory, {
-          clientID: client.id,
-          employerName: employmentDto.employerName,
-          industry: employmentDto.industry,
-          position: employmentDto.position,
-          contractType: employmentDto.contractType,
-          contractDuration: employmentDto.contractDuration,
-          startDate: employmentDto.startDate,
-          endDate: employmentDto.endDate,
-          status: employmentDto.status,
-          branchID: branchID,
-        });
+        console.log(employmentDtos);
 
-        const savedEmployment = await queryRunner.manager.save(
-          EmploymentHistory,
-          employment,
-        );
-
-        // Create Salary History records
-        if (employmentDto.salaries && employmentDto.salaries.length > 0) {
-          const salaryRecords = employmentDto.salaries.map((salaryDto) => {
-            return queryRunner.manager.create(SalaryHistory, {
-              baseSalary: salaryDto.baseSalary,
-              allowances: salaryDto.allowances || 0,
-              deductions: salaryDto.deductions || 0,
-              year: salaryDto.year,
-              employmentHistoryID: savedEmployment.id,
-              isVerified: false,
-              isCurrent: true,
+        // Create Employment History records
+        if (employmentDtos && employmentDtos.length > 0) {
+          // Create all employment records
+          const employmentRecords = employmentDtos.map((employmentDto) => {
+            return queryRunner.manager.create(EmploymentHistory, {
+              clientID: client.id,
+              employerName: employmentDto.employerName,
+              industry: employmentDto.industry,
+              position: employmentDto.position,
+              contractType: employmentDto.contractType,
+              contractDuration: employmentDto.contractDuration,
+              startDate: employmentDto.startDate,
+              endDate: employmentDto.endDate,
+              status: employmentDto.status,
+              branchID: branchID,
             });
           });
 
-          await queryRunner.manager.save(SalaryHistory, salaryRecords);
+          // Batch save all employment records
+          const savedEmployments = await queryRunner.manager.save(
+            EmploymentHistory,
+            employmentRecords,
+          );
+
+          // Create all salary records for all employments
+          const allSalaryRecords: any[] = [];
+
+          savedEmployments.forEach((savedEmployment, index) => {
+            const employmentDto = employmentDtos[index];
+
+            if (employmentDto.salaries && employmentDto.salaries.length > 0) {
+              const salaryRecords = employmentDto.salaries.map((salaryDto) => {
+                return queryRunner.manager.create(SalaryHistory, {
+                  baseSalary: salaryDto.baseSalary,
+                  allowances: salaryDto.allowances || 0,
+                  deductions: salaryDto.deductions || 0,
+                  year: salaryDto.year,
+                  employmentHistoryID: savedEmployment.id,
+                  isVerified: false,
+                  isCurrent: true,
+                });
+              });
+
+              allSalaryRecords.push(...salaryRecords);
+            }
+          });
+
+          // Batch save all salary records
+          if (allSalaryRecords.length > 0) {
+            await queryRunner.manager.save(SalaryHistory, allSalaryRecords);
+          }
         }
       }
 
